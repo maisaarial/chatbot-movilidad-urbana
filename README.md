@@ -14,6 +14,7 @@ El objetivo del proyecto es construir una base tecnica defendible para un chatbo
 - Guardar datos procesados en CSV.
 - Indexar textos en ChromaDB para el chatbot RAG.
 - Preguntar en lenguaje natural con un chatbot RAG usando Ollama local.
+- Construir un corpus multifuente inicial con avisos institucionales de movilidad.
 - Exponer la funcionalidad mediante FastAPI y Streamlit.
 
 ## Arquitectura General
@@ -24,7 +25,7 @@ El proyecto esta dividido en tres capas principales:
 |---|---|---|
 | Frontend | Streamlit | Interfaz para consultar datos, ver tablas, filtrar congestion y visualizar camaras. |
 | Backend | FastAPI | Endpoints HTTP para exponer incidencias, camaras, congestion y busqueda RAG. |
-| Logica de negocio | Python en `src/` | Conexion con Trafikoa, normalizacion, calculo de congestion y vector store. |
+| Logica de negocio | Python en `src/` | Conexion con Trafikoa, fuentes externas, normalizacion, calculo de congestion y vector store. |
 
 Flujo general:
 
@@ -34,6 +35,8 @@ Usuario
   -> FastAPI
   -> Modulos src/trafikoa
   -> API Trafikoa/Open Data Euskadi
+  -> Modulos src/sources
+  -> Fuentes externas institucionales
   -> data/raw y data/processed
   -> Respuesta al frontend
 ```
@@ -45,6 +48,7 @@ backend/              API con FastAPI
 frontend/             Interfaz simple con Streamlit
 src/                  Logica de negocio
 src/trafikoa/         Cliente y descargas desde Trafikoa Euskadi
+src/sources/          Conectores de fuentes externas y esquema de corpus
 src/rag/              Indexacion RAG, recuperacion y cliente Ollama
 data/raw/             Respuestas originales descargadas
 data/processed/       CSV normalizados
@@ -70,6 +74,9 @@ docs/                 Documentacion tecnica del proyecto
 | `src/rag/ollama_client.py` | Cliente HTTP para Ollama local. |
 | `src/rag/chatbot.py` | Orquesta retrieve, prompt y respuesta del LLM local. |
 | `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
+| `src/sources/base.py` | Define el esquema comun del corpus multifuente y utilidades de guardado. |
+| `src/sources/bilbao.py` | Extrae avisos de movilidad del Ayuntamiento de Bilbao. |
+| `scripts/build_corpus.py` | Construye `data/processed/corpus_movilidad.csv` desde fuentes externas. |
 
 ## Requisitos
 
@@ -114,6 +121,21 @@ El indice se guarda en:
 
 ```text
 data/vectorstore
+```
+
+## Construir Corpus Multifuente
+
+Para descargar avisos institucionales de movilidad del Ayuntamiento de Bilbao y generar el corpus consolidado:
+
+```powershell
+.venv\Scripts\python scripts\build_corpus.py
+```
+
+Archivos generados:
+
+```text
+data/raw/bilbao_raw.json
+data/processed/corpus_movilidad.csv
 ```
 
 ## Ejecutar Backend
@@ -167,6 +189,8 @@ http://127.0.0.1:8501
 | `GET` | `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
 | `POST` | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `POST` | `/chat` | Responde preguntas usando RAG y Ollama local. |
+| `GET` | `/corpus` | Devuelve documentos del corpus multifuente consolidado. |
+| `POST` | `/corpus/refresh` | Reconstruye el corpus multifuente desde el conector de Bilbao. |
 
 ## Archivos Generados
 
@@ -178,6 +202,8 @@ http://127.0.0.1:8501
 | `data/processed/cameras.csv` | Camaras normalizadas. |
 | `data/raw/congestion_raw.json` | Respuesta original de flows/meters usada para congestion. |
 | `data/processed/congestion.csv` | Registros de congestion normalizados y preparados para RAG. |
+| `data/raw/bilbao_raw.json` | Avisos originales extraidos del Ayuntamiento de Bilbao. |
+| `data/processed/corpus_movilidad.csv` | Corpus multifuente consolidado con esquema comun. |
 | `data/vectorstore/` | Indice ChromaDB y estado TTL reconstruidos desde los CSV procesados. |
 
 ## Documentacion
@@ -186,6 +212,7 @@ http://127.0.0.1:8501
 - [API Trafikoa](docs/trafikoa_api.md)
 - [Calculo de Congestion](docs/congestion.md)
 - [RAG y Ollama](docs/rag.md)
+- [Corpus Multifuente](docs/corpus_multifuente.md)
 - [Pruebas](docs/pruebas.md)
 - [Uso Local](docs/uso_local.md)
 
@@ -196,3 +223,5 @@ El proyecto cuenta con una primera version funcional. El backend y el frontend a
 La clasificacion de congestion es una primera aproximacion por umbrales sobre `totalVehicles`, con unidad `vehiculos/intervalo`. No se usan datos inventados. Cuando Trafikoa no proporciona nombre de carretera para un medidor, se conserva un identificador real de medidor.
 
 El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El indice se refresca automaticamente por TTL cada 5 minutos cuando se consulta el RAG, y tambien puede reconstruirse manualmente con `POST /rag/refresh` o desde Streamlit. Para preguntas explicitas de camaras, el chatbot prioriza la busqueda estructurada en `data/processed/cameras.csv` para no perder URLs, coordenadas ni enlaces a mapa. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.
+
+Tambien se ha iniciado la consolidacion multifuente con un esquema comun en `src/sources/base.py` y un conector para avisos del Ayuntamiento de Bilbao en `src/sources/bilbao.py`. Esta primera fase genera `data/raw/bilbao_raw.json` y `data/processed/corpus_movilidad.csv`, pero todavia no indexa este corpus en el RAG para mantener separadas la validacion del dataset y la recuperacion semantica.

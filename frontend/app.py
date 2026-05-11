@@ -13,8 +13,8 @@ st.caption("Primera version funcional para consultar Trafikoa y probar RAG.")
 
 api_url = st.sidebar.text_input("Backend URL", value=settings.backend_url)
 
-tab_incidents, tab_cameras, tab_congestion, tab_chatbot, tab_rag = st.tabs(
-    ["Incidencias", "Camaras", "Congestion", "Chatbot", "RAG"]
+tab_incidents, tab_cameras, tab_congestion, tab_chatbot, tab_corpus, tab_rag = st.tabs(
+    ["Incidencias", "Camaras", "Congestion", "Chatbot", "Corpus multifuente", "RAG"]
 )
 
 
@@ -376,6 +376,70 @@ with tab_chatbot:
                     st.markdown(f"[Ver en Google Maps]({maps_url})")
                 st.markdown("**Metadata completa**")
                 st.json(metadata)
+
+with tab_corpus:
+    st.subheader("Corpus multifuente")
+    if st.button("Actualizar corpus", use_container_width=True):
+        try:
+            payload = post_json("/corpus/refresh")
+            st.session_state["corpus_items"] = payload.get("items", [])
+            st.success(f"Corpus actualizado: {payload.get('count', 0)} documentos.")
+        except requests.RequestException as exc:
+            st.error(f"No se pudo actualizar el corpus: {exc}")
+
+    try:
+        if "corpus_items" not in st.session_state:
+            payload = get_json("/corpus")
+            st.session_state["corpus_items"] = payload.get("items", [])
+    except requests.RequestException as exc:
+        st.error(f"No se pudo cargar el corpus: {exc}")
+
+    corpus_items = st.session_state.get("corpus_items", [])
+    st.metric("Documentos", len(corpus_items))
+
+    if corpus_items:
+        source_counts = Counter(item.get("source", "") for item in corpus_items)
+        st.markdown("**Conteo por fuente**")
+        st.table(
+            [
+                {"source": source, "count": count}
+                for source, count in sorted(source_counts.items())
+            ]
+        )
+
+        sources = sorted({item.get("source", "") for item in corpus_items if item.get("source")})
+        municipios = sorted(
+            {item.get("municipio", "") for item in corpus_items if item.get("municipio")}
+        )
+        event_types = sorted(
+            {item.get("tipo_evento", "") for item in corpus_items if item.get("tipo_evento")}
+        )
+
+        col_source, col_municipio, col_event = st.columns(3)
+        with col_source:
+            selected_source = st.selectbox("Fuente", ["Todas"] + sources)
+        with col_municipio:
+            selected_municipio = st.selectbox("Municipio", ["Todos"] + municipios)
+        with col_event:
+            selected_event = st.selectbox("Tipo de evento", ["Todos"] + event_types)
+
+        filtered_corpus = corpus_items
+        if selected_source != "Todas":
+            filtered_corpus = [
+                item for item in filtered_corpus if item.get("source") == selected_source
+            ]
+        if selected_municipio != "Todos":
+            filtered_corpus = [
+                item for item in filtered_corpus if item.get("municipio") == selected_municipio
+            ]
+        if selected_event != "Todos":
+            filtered_corpus = [
+                item for item in filtered_corpus if item.get("tipo_evento") == selected_event
+            ]
+
+        st.dataframe(filtered_corpus, use_container_width=True, hide_index=True)
+    else:
+        st.info("Pulsa el boton para construir el corpus multifuente.")
 
 with tab_rag:
     st.subheader("Estado RAG")

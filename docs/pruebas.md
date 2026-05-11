@@ -165,6 +165,126 @@ Get-Item data\raw\congestion_raw.json
 Get-Item data\processed\congestion.csv
 ```
 
+## Pruebas Del Corpus Multifuente
+
+Estas pruebas verifican la primera fase de integracion de fuentes externas. En esta fase solo se incorpora el conector del Ayuntamiento de Bilbao.
+
+### Construccion Del Corpus
+
+Comando:
+
+```powershell
+.venv\Scripts\python scripts\build_corpus.py
+```
+
+Resultado obtenido:
+
+```text
+Corpus multifuente construido: total=8, by_source={'Ayuntamiento de Bilbao': 8}, processed_path=data\processed\corpus_movilidad.csv
+```
+
+Estado: Paso.
+
+Nota: el numero de documentos puede cambiar porque la pagina de avisos del Ayuntamiento de Bilbao es una fuente viva.
+
+### Archivos Generados
+
+Comando:
+
+```powershell
+Get-Item data\raw\bilbao_raw.json,data\processed\corpus_movilidad.csv | Select-Object Name,Length,LastWriteTime
+```
+
+Resultado obtenido:
+
+```text
+bilbao_raw.json        8781 bytes
+corpus_movilidad.csv  12233 bytes
+```
+
+Estado: Paso.
+
+### Validacion Del CSV Consolidado
+
+Comando:
+
+```powershell
+.venv\Scripts\python -c "import csv; rows=list(csv.DictReader(open('data/processed/corpus_movilidad.csv', encoding='utf-8'))); print('rows', len(rows)); print('roads', sorted({r['carretera'] for r in rows if r['carretera']})); print('sources', sorted({r['source'] for r in rows})); print('types', sorted({r['tipo_evento'] for r in rows}))"
+```
+
+Resultado obtenido:
+
+```text
+rows 8
+roads []
+sources ['Ayuntamiento de Bilbao']
+types ['corte_trafico', 'obras']
+```
+
+Interpretacion:
+
+El corpus contiene documentos reales del Ayuntamiento de Bilbao. No se detectaron carreteras explicitas en estos avisos, por lo que `carretera` queda vacio. Esto evita inventar valores a partir de expresiones como horas.
+
+Estado: Paso.
+
+### GET `/corpus`
+
+Comando:
+
+```powershell
+$r = curl.exe -s --max-time 30 "http://127.0.0.1:8000/corpus" | ConvertFrom-Json
+"count=$($r.count)"
+"first_source=$($r.items[0].source)"
+"first_tipo=$($r.items[0].tipo_evento)"
+```
+
+Resultado obtenido:
+
+```text
+count=8
+first_source=Ayuntamiento de Bilbao
+first_tipo=corte_trafico
+```
+
+Estado: Paso.
+
+### POST `/corpus/refresh`
+
+Comando:
+
+```powershell
+$r = curl.exe -s --max-time 60 -X POST "http://127.0.0.1:8000/corpus/refresh" | ConvertFrom-Json
+"count=$($r.count)"
+"source_count=$($r.by_source.'Ayuntamiento de Bilbao')"
+```
+
+Resultado obtenido:
+
+```text
+count=8
+source_count=8
+```
+
+Estado: Paso.
+
+### Frontend Con Pestana Corpus Multifuente
+
+Comandos:
+
+```powershell
+curl.exe -I --max-time 10 "http://127.0.0.1:8501"
+Select-String -Path frontend\app.py -Pattern "Corpus multifuente|Actualizar corpus|tipo_evento|/corpus/refresh|/corpus"
+```
+
+Resultado obtenido:
+
+```text
+HTTP/1.1 200 OK
+El frontend contiene la pestana Corpus multifuente, el boton Actualizar corpus, filtros por source, municipio y tipo_evento, y llamadas a /corpus y /corpus/refresh.
+```
+
+Estado: Paso.
+
 ## Pruebas Del Chatbot RAG
 
 ### Reconstruccion Del Indice

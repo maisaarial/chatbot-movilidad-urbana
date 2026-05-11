@@ -9,6 +9,7 @@ La idea principal es que cada capa tenga una responsabilidad clara:
 - Streamlit presenta la informacion al usuario.
 - FastAPI expone endpoints limpios y controlados.
 - Los modulos de `src/` consultan Trafikoa, normalizan datos y calculan resultados.
+- Los modulos de `src/sources/` incorporan fuentes textuales externas en un corpus comun.
 - Los datos originales y procesados se guardan en `data/`.
 
 ## Flujo General Del Sistema
@@ -30,6 +31,8 @@ API oficial Trafikoa/Open Data Euskadi
   |
   v
 Normalizacion y calculo
+  |
+  +--> src/sources/* --> fuentes externas institucionales
   |
   +--> data/raw/*.json
   |
@@ -56,6 +59,7 @@ Sus responsabilidades son:
 - Filtrar congestion por carretera y nivel.
 - Mostrar resumen de conteo por nivel.
 - Usar el chatbot RAG local y mostrar las fuentes recuperadas.
+- Mostrar el corpus multifuente, filtrar documentos y ejecutar su actualizacion.
 
 Streamlit no consulta directamente Trafikoa. Toda la comunicacion externa se hace a traves del backend FastAPI.
 
@@ -83,6 +87,8 @@ Endpoints principales:
 | `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
 | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `/chat` | Responde preguntas con RAG y Ollama local. |
+| `/corpus` | Devuelve documentos del corpus multifuente consolidado. |
+| `/corpus/refresh` | Reconstruye el corpus multifuente desde fuentes externas. |
 
 ## Conexion Trafikoa
 
@@ -109,6 +115,40 @@ Los modulos de procesamiento estan separados por dominio:
 | `src/trafikoa/congestion.py` | Flujos y medidores para congestion. |
 
 Cada modulo descarga datos reales, conserva una copia original y genera una version procesada.
+
+## Corpus Multifuente
+
+El corpus multifuente se implementa en `src/sources/`.
+
+| Modulo | Responsabilidad |
+|---|---|
+| `src/sources/base.py` | Define el esquema comun `CorpusDocument`, guardado CSV/JSON y deduplicacion. |
+| `src/sources/bilbao.py` | Descarga y normaliza avisos institucionales del Ayuntamiento de Bilbao. |
+| `scripts/build_corpus.py` | Ejecuta conectores, guarda datos crudos y genera el CSV consolidado. |
+
+El esquema comun contiene:
+
+```text
+id, timestamp, source, source_type, title, text, url, municipio,
+provincia, carretera, tipo_evento, raw_text, rag_text
+```
+
+La primera fuente externa es la pagina de avisos del Ayuntamiento de Bilbao. Se extraen avisos relacionados con movilidad, trafico, cortes, obras, aparcamiento, calzada y transporte. Si un campo no esta disponible en la fuente, se deja vacio.
+
+El flujo del corpus es:
+
+```text
+Ayuntamiento de Bilbao
+  -> src/sources/bilbao.py
+  -> limpieza HTML y filtro de movilidad
+  -> CorpusDocument
+  -> deduplicacion por URL o hash de texto
+  -> data/raw/bilbao_raw.json
+  -> data/processed/corpus_movilidad.csv
+  -> GET /corpus y pestana Corpus multifuente
+```
+
+En esta fase el corpus multifuente no se indexa todavia en ChromaDB. Solo se prepara `rag_text` para una integracion posterior.
 
 ## Congestion
 
@@ -143,3 +183,5 @@ Pregunta del usuario
   -> Ollama local
   -> respuesta + fuentes
 ```
+
+El RAG sigue usando los CSV de Trafikoa ya consolidados (`incidents.csv`, `cameras.csv` y `congestion.csv`). El nuevo `corpus_movilidad.csv` queda preparado pero fuera del indice hasta que se valide la calidad del dataset multifuente.

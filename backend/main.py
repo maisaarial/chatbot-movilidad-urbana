@@ -9,6 +9,14 @@ from src.rag.chatbot import answer_question
 from src.rag.index_manager import get_index_status, refresh_index, refresh_index_if_stale
 from src.rag.ollama_client import OllamaError
 from src.rag.vector_store import VectorStore
+from src.sources.base import (
+    deduplicate_documents,
+    load_corpus_csv,
+    save_corpus_csv,
+    save_raw_json,
+    summarize_by_source,
+)
+from src.sources.bilbao import fetch_bilbao_documents
 from src.trafikoa.cameras import get_cameras
 from src.trafikoa.camera_search import get_camera_by_id, search_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
@@ -26,6 +34,20 @@ trafikoa_client = TrafikoaClient.from_env()
 
 class ChatRequest(BaseModel):
     question: str
+
+
+def rebuild_corpus() -> dict[str, Any]:
+    bilbao_documents, bilbao_raw = fetch_bilbao_documents()
+    save_raw_json(bilbao_raw, settings.raw_data_dir / "bilbao_raw.json")
+
+    documents = deduplicate_documents(bilbao_documents)
+    save_corpus_csv(documents, settings.processed_data_dir / "corpus_movilidad.csv")
+
+    return {
+        "count": len(documents),
+        "by_source": summarize_by_source(documents),
+        "items": [document.to_dict() for document in documents],
+    }
 
 
 @app.get("/health")
@@ -106,6 +128,33 @@ def camara_detail(camera_id: str) -> dict[str, Any]:
     if camera is None:
         raise HTTPException(status_code=404, detail="Camara no encontrada.")
     return camera
+
+
+@app.get("/corpus")
+def corpus(
+    source: str | None = Query(None, description="Filtrar por fuente."),
+    municipio: str | None = Query(None, description="Filtrar por municipio."),
+    tipo_evento: str | None = Query(None, description="Filtrar por tipo de evento."),
+) -> dict[str, Any]:
+    items = load_corpus_csv(settings.processed_data_dir / "corpus_movilidad.csv")
+    if source:
+        items = [item for item in items if item.get("source") == source]
+    if municipio:
+        items = [item for item in items if item.get("municipio") == municipio]
+    if tipo_evento:
+        items = [item for item in items if item.get("tipo_evento") == tipo_evento]
+    return {"count": len(items), "items": items}
+
+
+@app.post("/corpus/refresh")
+def corpus_refresh() -> dict[str, Any]:
+    try:
+        return rebuild_corpus()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Error reconstruyendo el corpus multifuente: {exc}",
+        ) from exc
 
 
 @app.get("/congestion")
