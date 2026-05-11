@@ -239,26 +239,45 @@ Estado: Paso.
 
 ### POST `/chat`
 
-Antes de repetir la prueba se ajusto `OLLAMA_TIMEOUT=120` para dar margen suficiente a la generacion local y se limito la respuesta con `num_predict=220`.
+Antes de repetir la prueba se ajusto `OLLAMA_TIMEOUT=180` para dar margen suficiente a la generacion local y se limito la respuesta con `num_predict=220`.
 
 Comando:
 
 ```powershell
-$body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json" -TimeoutSec 180 | ConvertTo-Json -Depth 8
+$body = @{ question = "¿Hay incidencias en la A-8?" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json; charset=utf-8" -TimeoutSec 240
+$answer = $r.answer
+$checks = @("Tipo:", "Causa:", "Sentido:", "Municipio/provincia:", "Fecha/hora:")
+$missing = @($checks | Where-Object { $answer -notlike "*$_*" })
+$answer
+"sources=$($r.sources.Count)"
+if ($missing.Count -eq 0 -and $r.sources.Count -gt 0) { "detalle=paso" } else { "detalle=falla" }
 ```
 
 Resultado obtenido:
 
 ```text
-answer: Si, hay varias incidencias registradas en la carretera A-8 recientemente.
-sources: 5 fuentes
-source 1: incidencia | A-8 | Bilbao | BIZKAIA | 2026-05-11T17:28
-source 2: incidencia | A-8 | Galdakao | BIZKAIA | 2026-05-11T16:47:35
-source 3: incidencia | A-8 | Gipuzkoa | 2026-05-11T14:15:04
-source 4: incidencia | A-8 | Gipuzkoa | 2026-05-11T14:15:04
-source 5: incidencia | A-8 | Bizkaia | 2026-05-11T14:15:04
+Si. Segun las fuentes recuperadas, se encontraron estas incidencias:
+1. Tipo: Accidente
+   Carretera: A-8
+   Causa: Salida
+   Sentido: Irun
+   Municipio/provincia: Bilbao / BIZKAIA
+   Fecha/hora: 2026-05-11T17:28
+2. Tipo: Accidente
+   Carretera: A-8
+   Causa: Alcance
+   Sentido: Irun
+   Municipio/provincia: Galdakao / BIZKAIA
+   Fecha/hora: 2026-05-11T16:47:35
+...
+sources=5
+detalle=paso
 ```
+
+Interpretacion:
+
+La respuesta ya no es una afirmacion generica. Enumera las incidencias recuperadas y contiene campos concretos: tipo, carretera, causa, sentido, municipio/provincia y fecha/hora.
 
 Estado: Paso.
 

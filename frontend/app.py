@@ -29,7 +29,7 @@ def get_json(path: str, params: dict | None = None) -> dict:
 
 
 def post_json(path: str, payload: dict) -> dict:
-    response = requests.post(f"{api_url}{path}", json=payload, timeout=180)
+    response = requests.post(f"{api_url}{path}", json=payload, timeout=240)
     try:
         response.raise_for_status()
     except requests.HTTPError as exc:
@@ -44,6 +44,44 @@ def _extract_error_detail(response: requests.Response) -> str:
     except ValueError:
         return response.text or str(response.status_code)
     return str(payload.get("detail") or payload)
+
+
+def _source_label(index: int, metadata: dict) -> str:
+    parts = [
+        metadata.get("document_type") or metadata.get("tipo") or "fuente",
+        metadata.get("carretera"),
+        metadata.get("tipo")
+        if metadata.get("tipo") != metadata.get("document_type")
+        else None,
+        metadata.get("municipio"),
+        metadata.get("timestamp"),
+    ]
+    clean_parts = [str(part) for part in parts if part]
+    return f"{index}. {' | '.join(clean_parts)}"
+
+
+def _source_summary(metadata: dict) -> dict:
+    return {
+        "carretera": _source_value(metadata, "carretera"),
+        "tipo": _source_value(metadata, "tipo"),
+        "causa": _source_value(metadata, "causa"),
+        "sentido": _source_value(metadata, "sentido"),
+        "municipio": _source_value(metadata, "municipio"),
+        "provincia": _source_value(metadata, "provincia"),
+        "timestamp": _source_value(metadata, "timestamp"),
+        "congestion": _source_value(metadata, "congestion"),
+        "valor_trafico": _source_value(metadata, "valor_trafico"),
+        "unidad": _source_value(metadata, "unidad"),
+        "nombre": _source_value(metadata, "nombre"),
+        "image_url": _source_value(metadata, "image_url"),
+    }
+
+
+def _source_value(metadata: dict, key: str) -> str:
+    value = metadata.get(key)
+    if value is None or str(value).strip() == "":
+        return "no disponible"
+    return str(value)
 
 
 with tab_incidents:
@@ -175,16 +213,18 @@ with tab_chatbot:
         st.markdown("**Fuentes usadas**")
         for index, source in enumerate(sources, start=1):
             metadata = source.get("metadata", {})
-            label = metadata.get("document_type") or metadata.get("tipo") or f"Fuente {index}"
-            with st.expander(f"{index}. {label}"):
+            with st.expander(_source_label(index, metadata)):
+                st.table([_source_summary(metadata)])
+                st.markdown("**Texto recuperado**")
                 st.write(source.get("text", ""))
-                st.json(metadata)
                 image_url = metadata.get("image_url")
                 if image_url:
                     if image_url.startswith("http://"):
                         st.markdown(f"[Abrir imagen]({image_url})")
                     else:
                         st.image(image_url, use_container_width=True)
+                st.markdown("**Metadata completa**")
+                st.json(metadata)
 
 with tab_rag:
     st.subheader("Busqueda RAG basica")

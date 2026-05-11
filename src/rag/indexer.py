@@ -12,20 +12,6 @@ CSV_SPECS = [
     ("congestion", "congestion.csv"),
 ]
 
-METADATA_FIELDS = [
-    "tipo",
-    "carretera",
-    "municipio",
-    "provincia",
-    "timestamp",
-    "fuente",
-    "image_url",
-    "congestion",
-    "valor_trafico",
-    "unidad",
-]
-
-
 def build_index(reset: bool = True) -> dict[str, Any]:
     vector_store = VectorStore.from_env()
     if reset:
@@ -93,13 +79,12 @@ def _row_to_metadata(
         "row_number": row_number,
     }
 
-    for field in METADATA_FIELDS:
-        value = (row.get(field) or "").strip()
+    for field, raw_value in row.items():
+        if field == "rag_text":
+            continue
+        value = (raw_value or "").strip()
         if value:
             metadata[field] = value
-
-    if doc_type == "camara" and row.get("nombre"):
-        metadata["nombre"] = row["nombre"].strip()
 
     return metadata
 

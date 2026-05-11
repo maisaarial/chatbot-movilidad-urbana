@@ -96,7 +96,7 @@ El modelo se puede cambiar en `.env`:
 
 ```text
 OLLAMA_MODEL=qwen2.5:3b
-OLLAMA_TIMEOUT=120
+OLLAMA_TIMEOUT=180
 ```
 
 ## Reconstruir Indice RAG

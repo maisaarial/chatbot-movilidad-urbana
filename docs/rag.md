@@ -140,7 +140,7 @@ Configuracion:
 ```text
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:3b
-OLLAMA_TIMEOUT=120
+OLLAMA_TIMEOUT=180
 ```
 
 Instalacion del modelo:
@@ -161,6 +161,42 @@ No uses conocimiento externo, suposiciones ni datos inventados.
 Si el contexto no contiene evidencia suficiente, responde:
 No encontré información suficiente en las fuentes disponibles.
 ```
+
+Ademas, el contexto enviado al modelo no contiene solo texto plano. Cada documento recuperado se envia como una fuente numerada:
+
+```text
+[Fuente 1]
+Tipo de documento: incidencia
+Metadata completa: {"carretera": "A-8", "causa": "Salida", ...}
+Texto recuperado: id: 363423. timestamp: ...
+```
+
+Para datos tabulares suficientemente claros, el chatbot genera una respuesta extractiva directamente desde la metadata recuperada. Esto evita respuestas genericas como "si, hay varias incidencias" y obliga a listar los campos concretos disponibles.
+
+Ejemplo de respuesta para incidencias:
+
+```text
+Si. Segun las fuentes recuperadas, se encontraron estas incidencias:
+1. Tipo: Accidente
+   Carretera: A-8
+   Causa: Salida
+   Sentido: Irun
+   Municipio/provincia: Bilbao / BIZKAIA
+   Fecha/hora: 2026-05-11T17:28
+```
+
+En el frontend, la pestaña `Chatbot` muestra las fuentes usadas con una etiqueta descriptiva. Para cada fuente se presenta:
+
+- carretera
+- tipo
+- causa
+- sentido
+- municipio
+- provincia
+- timestamp
+- texto recuperado
+- metadata completa
+- enlace o imagen si existe `image_url`
 
 ## Endpoint `/chat`
 
