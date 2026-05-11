@@ -92,6 +92,15 @@ Camaras:
 curl.exe -s "http://127.0.0.1:8000/camaras"
 ```
 
+Busqueda estructurada de camaras:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=A-8"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?municipio=Galdakao"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?provincia=BIZKAIA"
+```
+
 Congestion con datos reales:
 
 ```powershell
@@ -130,6 +139,16 @@ Prueba el endpoint:
 
 ```powershell
 $body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+```
+
+Ejemplos de chat para camaras:
+
+```powershell
+$body = @{ question = "Muestrame camaras en Bilbao" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+
+$body = @{ question = "Que camaras hay en la A-8?" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
 ```
 

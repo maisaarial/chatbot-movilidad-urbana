@@ -10,6 +10,7 @@ from src.rag.index_manager import get_index_status, refresh_index, refresh_index
 from src.rag.ollama_client import OllamaError
 from src.rag.vector_store import VectorStore
 from src.trafikoa.cameras import get_cameras
+from src.trafikoa.camera_search import search_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
 from src.trafikoa.congestion import get_congestion_records
 from src.trafikoa.incidents import get_current_incidents
@@ -68,6 +69,30 @@ def camaras() -> dict[str, Any]:
 @app.get("/cameras")
 def cameras() -> dict[str, Any]:
     return camaras()
+
+
+@app.get("/camaras/search")
+def camaras_search(
+    q: str | None = Query(None, description="Texto libre para buscar camaras."),
+    municipio: str | None = Query(None, description="Municipio de la camara."),
+    carretera: str | None = Query(None, description="Carretera de la camara."),
+    provincia: str | None = Query(None, description="Provincia de la camara."),
+    limit: int = Query(10, ge=1, le=100, description="Numero maximo de resultados."),
+) -> dict[str, Any]:
+    try:
+        items = search_cameras(
+            q=q,
+            municipio=municipio,
+            carretera=carretera,
+            provincia=provincia,
+            limit=limit,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno buscando camaras procesadas.",
+        ) from exc
+    return {"count": len(items), "items": items}
 
 
 @app.get("/congestion")

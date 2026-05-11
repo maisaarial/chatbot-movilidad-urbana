@@ -269,6 +269,141 @@ El endpoint de busqueda detecto que el indice habia caducado y lo reconstruyo au
 
 Estado: Paso.
 
+## Pruebas De Busqueda Estructurada De Camaras
+
+### GET `/camaras/search?q=Bilbao`
+
+Comando:
+
+```powershell
+$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao" -TimeoutSec 30
+"count=$($r.count)"
+$r.items[0] | ConvertTo-Json -Depth 4
+```
+
+Resultado obtenido:
+
+```text
+count=10
+id=91
+nombre=CCTV 402 - Bajada de Enekuri
+carretera=BI-604
+municipio=Bilbao
+provincia=Bizkaia
+image_url=
+maps_url=https://www.google.com/maps?q=43.27968,-2.95637502
+```
+
+Estado: Paso.
+
+### GET `/camaras/search?carretera=A-8`
+
+Comando:
+
+```powershell
+$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=A-8" -TimeoutSec 30
+"count=$($r.count)"
+$r.items[0] | ConvertTo-Json -Depth 4
+```
+
+Resultado obtenido:
+
+```text
+count=10
+id=1
+nombre=Iurreta
+carretera=A-8
+image_url=https://www.trafikoa.eus/static/files/tr/camaras/819.jpg
+maps_url=https://www.google.com/maps?q=43.18725,-2.673754
+```
+
+Estado: Paso.
+
+### POST `/chat` Con Camaras En Bilbao
+
+Comando:
+
+```powershell
+$body = @{ question = "Muestrame camaras en Bilbao" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json; charset=utf-8" -TimeoutSec 240
+$r.answer
+"sources=$($r.sources.Count)"
+```
+
+Resultado obtenido:
+
+```text
+Si. Encontre estas camaras:
+1. Nombre: CCTV 402 - Bajada de Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: no hay imagen disponible
+   Mapa: https://www.google.com/maps?q=43.27968,-2.95637502
+sources=10
+```
+
+Estado: Paso.
+
+### POST `/chat` Con Camaras En La A-8
+
+Comando:
+
+```powershell
+$body = @{ question = "Que camaras hay en la A-8?" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json; charset=utf-8" -TimeoutSec 240
+$r.answer
+"sources=$($r.sources.Count)"
+```
+
+Resultado obtenido:
+
+```text
+Si. Encontre estas camaras:
+1. Nombre: Iurreta
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/819.jpg
+   Mapa: https://www.google.com/maps?q=43.18725,-2.673754
+sources=10
+```
+
+Estado: Paso.
+
+### Imagen Real De Camara
+
+Comando:
+
+```powershell
+curl.exe -I --max-time 15 "http://www.bizkaimove.com/camaras/cam1.jpg"
+```
+
+Resultado obtenido:
+
+```text
+HTTP/1.1 200 OK
+Content-Type: image/jpeg
+```
+
+Estado: Paso.
+
+### Frontend De Camaras
+
+Comandos:
+
+```powershell
+curl.exe -I --max-time 10 "http://127.0.0.1:8501"
+Select-String -Path frontend\app.py -Pattern "st.image\(|Ver imagen original|Ver en Google Maps|Buscar camaras"
+```
+
+Resultado obtenido:
+
+```text
+HTTP/1.1 200 OK
+El frontend contiene buscador de camaras, renderizado con st.image, link de imagen original y link a Google Maps.
+```
+
+Estado: Paso.
+
 ### Comprobacion De Ollama
 
 Comando:

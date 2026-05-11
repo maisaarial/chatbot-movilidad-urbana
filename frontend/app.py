@@ -74,6 +74,7 @@ def _source_summary(metadata: dict) -> dict:
         "unidad": _source_value(metadata, "unidad"),
         "nombre": _source_value(metadata, "nombre"),
         "image_url": _source_value(metadata, "image_url"),
+        "maps_url": _source_value(metadata, "maps_url"),
     }
 
 
@@ -82,6 +83,58 @@ def _source_value(metadata: dict, key: str) -> str:
     if value is None or str(value).strip() == "":
         return "no disponible"
     return str(value)
+
+
+def _maps_url_from_item(item: dict) -> str:
+    if item.get("maps_url"):
+        return str(item["maps_url"])
+    latitude = item.get("latitude")
+    longitude = item.get("longitude")
+    if latitude is None or longitude is None:
+        return ""
+    if str(latitude).strip() == "" or str(longitude).strip() == "":
+        return ""
+    return f"https://www.google.com/maps?q={latitude},{longitude}"
+
+
+def _display_camera_results(cameras: list[dict]) -> None:
+    st.dataframe(cameras, use_container_width=True, hide_index=True)
+    for camera in cameras:
+        title = " | ".join(
+            str(value)
+            for value in [
+                camera.get("nombre"),
+                camera.get("carretera"),
+                camera.get("municipio"),
+            ]
+            if value
+        )
+        with st.expander(title or "Camara"):
+            st.table(
+                [
+                    {
+                        "id": camera.get("id", ""),
+                        "nombre": camera.get("nombre", ""),
+                        "carretera": camera.get("carretera", ""),
+                        "municipio": camera.get("municipio", ""),
+                        "provincia": camera.get("provincia", ""),
+                    }
+                ]
+            )
+            image_url = camera.get("image_url")
+            if image_url:
+                st.image(image_url, use_container_width=True)
+                st.markdown(f"[Ver imagen original]({image_url})")
+            else:
+                st.info("No hay imagen disponible.")
+
+            maps_url = _maps_url_from_item(camera)
+            if maps_url:
+                st.markdown(f"[Ver en Google Maps]({maps_url})")
+
+            source_url = camera.get("source_url")
+            if source_url:
+                st.markdown(f"[Fuente original]({source_url})")
 
 
 def _display_rag_status(status: dict) -> None:
@@ -130,6 +183,49 @@ with tab_cameras:
 
     cameras = st.session_state.get("cameras", [])
     st.metric("Total", len(cameras))
+
+    st.markdown("**Buscar camaras procesadas**")
+    search_col_q, search_col_city = st.columns(2)
+    with search_col_q:
+        camera_q = st.text_input("Texto libre", key="camera_search_q")
+    with search_col_city:
+        camera_city = st.text_input("Municipio", key="camera_search_city")
+
+    search_col_road, search_col_province, search_col_limit = st.columns(3)
+    with search_col_road:
+        camera_road = st.text_input("Carretera", key="camera_search_road")
+    with search_col_province:
+        camera_province = st.text_input("Provincia", key="camera_search_province")
+    with search_col_limit:
+        camera_limit = st.number_input(
+            "Limite",
+            min_value=1,
+            max_value=100,
+            value=10,
+            key="camera_search_limit",
+        )
+
+    if st.button("Buscar camaras", use_container_width=True):
+        params = {
+            "q": camera_q.strip() or None,
+            "municipio": camera_city.strip() or None,
+            "carretera": camera_road.strip() or None,
+            "provincia": camera_province.strip() or None,
+            "limit": camera_limit,
+        }
+        params = {key: value for key, value in params.items() if value}
+        try:
+            payload = get_json("/camaras/search", params=params)
+            st.session_state["camera_search_results"] = payload["items"]
+            st.success(f"Camaras encontradas: {payload['count']}")
+        except requests.RequestException as exc:
+            st.error(f"No se pudieron buscar camaras: {exc}")
+
+    camera_search_results = st.session_state.get("camera_search_results", [])
+    if camera_search_results:
+        st.markdown("**Resultados de busqueda**")
+        _display_camera_results(camera_search_results)
+
     if cameras:
         st.dataframe(cameras, use_container_width=True, hide_index=True)
 
@@ -238,10 +334,14 @@ with tab_chatbot:
                 st.write(source.get("text", ""))
                 image_url = metadata.get("image_url")
                 if image_url:
-                    if image_url.startswith("http://"):
-                        st.markdown(f"[Abrir imagen]({image_url})")
-                    else:
-                        st.image(image_url, use_container_width=True)
+                    st.image(image_url, use_container_width=True)
+                    st.markdown(f"[Ver imagen original]({image_url})")
+                elif metadata.get("document_type") == "camara":
+                    st.info("No hay imagen disponible.")
+
+                maps_url = _maps_url_from_item(metadata)
+                if maps_url:
+                    st.markdown(f"[Ver en Google Maps]({maps_url})")
                 st.markdown("**Metadata completa**")
                 st.json(metadata)
 

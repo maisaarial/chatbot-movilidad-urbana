@@ -85,6 +85,49 @@ data/raw/cameras_raw.json
 data/processed/cameras.csv
 ```
 
+### Busqueda Estructurada De Camaras
+
+El modulo `src/trafikoa/camera_search.py` no consulta de nuevo la API externa. Lee solamente:
+
+```text
+data/processed/cameras.csv
+```
+
+Esto permite responder rapido a consultas como:
+
+```text
+Muestrame camaras en Bilbao
+Que camaras hay en la A-8
+Hay camara en la BI-637
+Camaras en Bizkaia
+```
+
+La busqueda es tolerante a mayusculas, minusculas y tildes. Puede filtrar por:
+
+| Parametro | Campo consultado |
+|---|---|
+| `q` | `nombre`, `carretera`, `municipio`, `provincia` |
+| `municipio` | `municipio` |
+| `carretera` | `carretera` |
+| `provincia` | `provincia` |
+| `limit` | Numero maximo de resultados |
+
+Endpoint local:
+
+```text
+GET /camaras/search
+```
+
+Ejemplos:
+
+```powershell
+Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?q=Bilbao"
+Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?carretera=A-8"
+Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?provincia=BIZKAIA"
+```
+
+Cada camara incluye `maps_url` calculado a partir de `latitude` y `longitude` cuando ambos datos existen. No se inventan camaras ni coordenadas.
+
 ## Flows, Meters Y Level Of Service
 
 Para congestion se usan mediciones reales de `flows`.

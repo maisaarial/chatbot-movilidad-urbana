@@ -8,6 +8,7 @@ El objetivo del proyecto es construir una base tecnica defendible para un chatbo
 
 - Consultar incidencias reales de Trafikoa.
 - Consultar camaras reales de trafico.
+- Buscar camaras por lenguaje natural, carretera, municipio o provincia.
 - Descargar mediciones reales de flujo de trafico.
 - Clasificar congestion en baja, media o alta.
 - Guardar datos procesados en CSV.
@@ -60,6 +61,7 @@ docs/                 Documentacion tecnica del proyecto
 | `src/trafikoa/client.py` | Cliente HTTP reutilizable para Trafikoa, con errores, logs, paginacion y guardado JSON. |
 | `src/trafikoa/incidents.py` | Descarga y normaliza incidencias. |
 | `src/trafikoa/cameras.py` | Descarga y normaliza camaras. |
+| `src/trafikoa/camera_search.py` | Busca camaras reales en el CSV procesado. |
 | `src/trafikoa/congestion.py` | Descarga flows/meters y genera registros de congestion. |
 | `src/congestion.py` | Reglas generales de clasificacion baja/media/alta. |
 | `src/rag/vector_store.py` | Vector store inicial con ChromaDB. |
@@ -153,6 +155,7 @@ http://127.0.0.1:8501
 | `GET` | `/health` | Comprueba que el backend esta funcionando. |
 | `GET` | `/incidencias` | Devuelve incidencias reales normalizadas. |
 | `GET` | `/camaras` | Devuelve camaras reales normalizadas. |
+| `GET` | `/camaras/search` | Busca camaras por texto libre, carretera, municipio o provincia. |
 | `GET` | `/incidents` | Alias de `/incidencias`. |
 | `GET` | `/cameras` | Alias de `/camaras`. |
 | `GET` | `/congestion` | Descarga flows reales y calcula congestion. |
@@ -191,4 +194,4 @@ El proyecto cuenta con una primera version funcional. El backend y el frontend a
 
 La clasificacion de congestion es una primera aproximacion por umbrales sobre `totalVehicles`, con unidad `vehiculos/intervalo`. No se usan datos inventados. Cuando Trafikoa no proporciona nombre de carretera para un medidor, se conserva un identificador real de medidor.
 
-El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El indice se refresca automaticamente por TTL cada 5 minutos cuando se consulta el RAG, y tambien puede reconstruirse manualmente con `POST /rag/refresh` o desde Streamlit. El chatbot usa recuperacion desde ese indice y llama a Ollama local. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.
+El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El indice se refresca automaticamente por TTL cada 5 minutos cuando se consulta el RAG, y tambien puede reconstruirse manualmente con `POST /rag/refresh` o desde Streamlit. Para preguntas explicitas de camaras, el chatbot prioriza la busqueda estructurada en `data/processed/cameras.csv` para no perder URLs, coordenadas ni enlaces a mapa. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.

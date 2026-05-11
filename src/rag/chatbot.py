@@ -1,12 +1,61 @@
 import json
+import re
 import unicodedata
 from typing import Any
 
 from src.config import settings
 from src.rag.ollama_client import OllamaClient
 from src.rag.retriever import retrieve
+from src.trafikoa.camera_search import normalize_text, search_cameras
 
 NO_EVIDENCE_MESSAGE = "No encontré información suficiente en las fuentes disponibles."
+NO_CAMERA_MESSAGE = "No encontré cámaras para ese lugar o carretera en las fuentes disponibles."
+CAMERA_ROAD_PATTERN = re.compile(r"\b(?:a|ap|bi|gi|n)-\s*\d+[a-z]?\b", re.IGNORECASE)
+CAMERA_INTENT_TERMS = {
+    "camara",
+    "camaras",
+    "camera",
+    "cameras",
+    "cctv",
+    "webcam",
+    "imagen",
+    "imagenes",
+}
+CAMERA_PROVINCES = {
+    "bizkaia": "Bizkaia",
+    "gipuzkoa": "Gipuzkoa",
+    "araba": "Alava-Araba",
+    "alava": "Alava-Araba",
+}
+CAMERA_QUERY_STOPWORDS = {
+    "camara",
+    "camaras",
+    "camera",
+    "cameras",
+    "cctv",
+    "webcam",
+    "imagen",
+    "imagenes",
+    "muestrame",
+    "muestra",
+    "mostrar",
+    "ver",
+    "que",
+    "cuales",
+    "hay",
+    "cerca",
+    "de",
+    "del",
+    "en",
+    "la",
+    "el",
+    "las",
+    "los",
+    "por",
+    "para",
+    "una",
+    "un",
+}
 
 SYSTEM_PROMPT = """
 Eres un asistente de movilidad urbana. Responde SOLO usando el contexto recuperado.
@@ -30,6 +79,10 @@ def answer_question(question: str, k: int | None = None) -> dict[str, Any]:
     question = question.strip()
     if not question:
         return {"answer": NO_EVIDENCE_MESSAGE, "sources": []}
+
+    camera_answer = _answer_camera_question(question)
+    if camera_answer is not None:
+        return camera_answer
 
     results = retrieve(question, k or settings.rag_top_k)
     useful_results = [result for result in results if result.get("text")]
@@ -195,6 +248,130 @@ def _build_structured_answer(results: list[dict[str, Any]]) -> str:
             ]
         )
     return "\n".join(lines)
+
+
+def _answer_camera_question(question: str) -> dict[str, Any] | None:
+    if not _is_camera_intent(question):
+        return None
+
+    filters = _camera_filters_from_question(question)
+    cameras = search_cameras(
+        q=filters.get("q"),
+        municipio=filters.get("municipio"),
+        carretera=filters.get("carretera"),
+        provincia=filters.get("provincia"),
+        limit=10,
+    )
+
+    if not cameras:
+        return {"answer": NO_CAMERA_MESSAGE, "sources": []}
+
+    return {
+        "answer": _build_camera_answer(cameras),
+        "sources": [_camera_to_source(camera) for camera in cameras],
+    }
+
+
+def _is_camera_intent(question: str) -> bool:
+    normalized_question = normalize_text(question)
+    terms = set(normalized_question.split())
+    if terms & CAMERA_INTENT_TERMS:
+        return True
+
+    has_show_verb = any(
+        term in terms for term in {"ver", "mostrar", "muestra", "muestrame"}
+    )
+    has_road = CAMERA_ROAD_PATTERN.search(normalized_question) is not None
+    return has_show_verb and has_road
+
+
+def _camera_filters_from_question(question: str) -> dict[str, str | None]:
+    normalized_question = normalize_text(question)
+    road = _extract_camera_road(normalized_question)
+    province = _extract_camera_province(normalized_question)
+    free_text = _extract_camera_free_text(normalized_question)
+
+    if road:
+        free_text = None
+    if province:
+        free_text = None
+
+    return {
+        "q": free_text,
+        "municipio": None,
+        "carretera": road,
+        "provincia": province,
+    }
+
+
+def _extract_camera_road(normalized_question: str) -> str | None:
+    match = CAMERA_ROAD_PATTERN.search(normalized_question)
+    if not match:
+        return None
+    return match.group(0).upper().replace(" ", "")
+
+
+def _extract_camera_province(normalized_question: str) -> str | None:
+    for normalized_province, province in CAMERA_PROVINCES.items():
+        if normalized_province in normalized_question.split():
+            return province
+    return None
+
+
+def _extract_camera_free_text(normalized_question: str) -> str | None:
+    cleaned = CAMERA_ROAD_PATTERN.sub(" ", normalized_question)
+    tokens = [
+        token
+        for token in cleaned.split()
+        if token not in CAMERA_QUERY_STOPWORDS and len(token) > 1
+    ]
+    if not tokens:
+        return None
+    return " ".join(tokens)
+
+
+def _build_camera_answer(cameras: list[dict[str, Any]]) -> str:
+    lines = ["Sí. Encontré estas cámaras:"]
+    for index, camera in enumerate(cameras, start=1):
+        image_url = camera.get("image_url") or "no hay imagen disponible"
+        maps_url = camera.get("maps_url") or "no disponible"
+        lines.extend(
+            [
+                f"{index}. Nombre: {_value_or_unavailable(camera.get('nombre'))}",
+                f"   Carretera: {_value_or_unavailable(camera.get('carretera'))}",
+                (
+                    "   Municipio/provincia: "
+                    f"{_value_or_unavailable(camera.get('municipio'))} / "
+                    f"{_value_or_unavailable(camera.get('provincia'))}"
+                ),
+                f"   Imagen: {image_url}",
+                f"   Mapa: {maps_url}",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _camera_to_source(camera: dict[str, Any]) -> dict[str, Any]:
+    metadata = dict(camera)
+    metadata["document_type"] = "camara"
+    metadata["tipo"] = "camara"
+    return {
+        "text": (
+            f"Cámara {camera.get('nombre') or 'no disponible'} en "
+            f"{camera.get('carretera') or 'no disponible'}, "
+            f"{camera.get('municipio') or 'no disponible'}, "
+            f"{camera.get('provincia') or 'no disponible'}."
+        ),
+        "score": 1.0,
+        "distance": 0.0,
+        "metadata": metadata,
+    }
+
+
+def _value_or_unavailable(value: Any) -> str:
+    if value is None or str(value).strip() == "":
+        return "no disponible"
+    return str(value)
 
 
 def _build_prompt(question: str, context: str) -> str:

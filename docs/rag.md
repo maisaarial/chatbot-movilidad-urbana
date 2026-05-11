@@ -15,6 +15,7 @@ No se usan APIs pagas. No se usa OpenAI API. El modelo generativo se ejecuta loc
 | Vector store | `src/rag/vector_store.py` | Gestiona ChromaDB y embeddings locales. |
 | Gestor de indice | `src/rag/index_manager.py` | Controla TTL, estado y refresco automatico del indice. |
 | Retriever | `src/rag/retriever.py` | Recupera documentos relevantes para una consulta. |
+| Buscador de camaras | `src/trafikoa/camera_search.py` | Busca camaras reales con filtros estructurados. |
 | Cliente Ollama | `src/rag/ollama_client.py` | Llama al endpoint local de Ollama. |
 | Chatbot | `src/rag/chatbot.py` | Construye contexto, prompt y respuesta final. |
 | Endpoint | `POST /chat` | Expone el chatbot al frontend. |
@@ -149,6 +150,53 @@ Ejemplo:
 
 ```powershell
 .venv\Scripts\python -c "from src.rag.retriever import retrieve; print(retrieve('A-8', k=2))"
+```
+
+## Busqueda Estructurada De Camaras
+
+Las camaras siguen indexadas en ChromaDB, pero cuando la pregunta del usuario es claramente sobre camaras se prioriza una busqueda estructurada sobre `data/processed/cameras.csv`.
+
+Motivo:
+
+- Las camaras tienen campos exactos como `image_url`, `latitude`, `longitude` y `maps_url`.
+- El RAG semantico puede recuperar texto relevante, pero no garantiza preservar URLs y coordenadas con precision.
+- La busqueda estructurada devuelve datos reales del CSV, listos para mostrar imagenes y enlaces.
+
+Consultas detectadas como camaras:
+
+```text
+Muestrame camaras en Bilbao
+Que camaras hay en la A-8
+Ver camaras cerca de Galdakao
+Camaras en Bizkaia
+Hay camara en la BI-637
+```
+
+Flujo:
+
+```text
+Pregunta del usuario
+  -> detectar intencion de camaras
+  -> extraer carretera/provincia/texto libre
+  -> search_cameras(...)
+  -> respuesta estructurada + sources con metadata completa
+```
+
+Respuesta esperada:
+
+```text
+Si. Encontre estas camaras:
+1. Nombre: Iurreta
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://...
+   Mapa: https://www.google.com/maps?q=...
+```
+
+Si no hay resultados:
+
+```text
+No encontre camaras para ese lugar o carretera en las fuentes disponibles.
 ```
 
 ## Ollama
