@@ -104,6 +104,34 @@ Congestion con valor puntual:
 curl.exe -s "http://127.0.0.1:8000/congestion?valor=151&umbral_bajo=50&umbral_alto=150"
 ```
 
+## Usar Chatbot RAG Local
+
+Reconstruye el indice:
+
+```powershell
+.venv\Scripts\python scripts\build_rag_index.py
+```
+
+Instala o arranca Ollama y descarga el modelo recomendado:
+
+```powershell
+ollama pull qwen2.5:3b
+```
+
+Configuracion recomendada en `.env`:
+
+```text
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_TIMEOUT=120
+```
+
+Prueba el endpoint:
+
+```powershell
+$body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+```
+
 ## Apagar Servidores
 
 Si los servidores estan en terminales abiertas, usa:

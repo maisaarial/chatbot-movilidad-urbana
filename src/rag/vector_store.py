@@ -1,4 +1,5 @@
 import hashlib
+import re
 from dataclasses import dataclass
 from typing import Any
 from uuid import uuid4
@@ -7,9 +8,9 @@ from src.config import settings
 
 
 class HashEmbeddingFunction:
-    """Tiny deterministic embedding function for the initial prototype."""
+    """Deterministic local embedding function for the initial prototype."""
 
-    def __init__(self, dimensions: int = 64) -> None:
+    def __init__(self, dimensions: int = 384) -> None:
         self.dimensions = dimensions
 
     def __call__(self, input: list[str]) -> list[list[float]]:
@@ -17,7 +18,7 @@ class HashEmbeddingFunction:
 
     def _embed(self, text: str) -> list[float]:
         vector = [0.0] * self.dimensions
-        tokens = text.lower().split()
+        tokens = re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", text.lower())
         for token in tokens:
             digest = hashlib.sha256(token.encode("utf-8")).digest()
             index = int.from_bytes(digest[:2], "big") % self.dimensions
@@ -35,6 +36,7 @@ class SearchResult:
     id: str
     document: str
     distance: float | None
+    metadata: dict[str, Any]
 
 
 class VectorStore:
@@ -77,9 +79,39 @@ class VectorStore:
             )
         return self._collection
 
-    def add_documents(self, documents: list[str]) -> list[str]:
-        ids = [str(uuid4()) for _ in documents]
-        self.collection.add(ids=ids, documents=documents)
+    def reset_collection(self) -> None:
+        try:
+            import chromadb
+            from chromadb.config import Settings as ChromaSettings
+        except ImportError as exc:
+            raise RuntimeError(
+                "ChromaDB no esta instalado. Ejecuta `pip install -r requirements.txt`."
+            ) from exc
+
+        client = chromadb.PersistentClient(
+            path=self.persist_dir,
+            settings=ChromaSettings(anonymized_telemetry=False),
+        )
+        try:
+            client.delete_collection(self.collection_name)
+        except Exception:
+            pass
+        self._collection = client.get_or_create_collection(
+            name=self.collection_name,
+            embedding_function=self.embedding_function,
+        )
+
+    def add_documents(
+        self,
+        documents: list[str],
+        metadatas: list[dict[str, Any]] | None = None,
+        ids: list[str] | None = None,
+    ) -> list[str]:
+        ids = ids or [str(uuid4()) for _ in documents]
+        if metadatas is not None:
+            self.collection.add(ids=ids, documents=documents, metadatas=metadatas)
+        else:
+            self.collection.add(ids=ids, documents=documents)
         return ids
 
     def search(self, query: str, limit: int = 3) -> list[dict[str, Any]]:
@@ -90,6 +122,7 @@ class VectorStore:
         ids = (raw_results.get("ids") or [[]])[0]
         documents = (raw_results.get("documents") or [[]])[0]
         distances = (raw_results.get("distances") or [[]])[0]
+        metadatas = (raw_results.get("metadatas") or [[]])[0]
 
         results = []
         for index, item_id in enumerate(ids):
@@ -98,6 +131,7 @@ class VectorStore:
                     id=item_id,
                     document=documents[index] if index < len(documents) else "",
                     distance=distances[index] if index < len(distances) else None,
+                    metadata=metadatas[index] if index < len(metadatas) else {},
                 ).__dict__
             )
         return results

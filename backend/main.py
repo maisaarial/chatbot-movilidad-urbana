@@ -1,9 +1,12 @@
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
 
 from src.config import settings
 from src.congestion import CongestionLevel, calcular_congestion
+from src.rag.chatbot import answer_question
+from src.rag.ollama_client import OllamaError
 from src.rag.vector_store import VectorStore
 from src.trafikoa.cameras import get_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
@@ -18,6 +21,10 @@ app = FastAPI(
 
 trafikoa_client = TrafikoaClient.from_env()
 vector_store = VectorStore.from_env()
+
+
+class ChatRequest(BaseModel):
+    question: str
 
 
 @app.get("/health")
@@ -160,6 +167,22 @@ def add_documents(documents: list[str]) -> dict[str, Any]:
 def rag_search(query: str, limit: int = Query(3, ge=1, le=10)) -> dict[str, Any]:
     results = vector_store.search(query=query, limit=limit)
     return {"query": query, "results": results}
+
+
+@app.post("/chat")
+def chat(request: ChatRequest) -> dict[str, Any]:
+    if not request.question.strip():
+        raise HTTPException(status_code=400, detail="La pregunta no puede estar vacia.")
+
+    try:
+        return answer_question(request.question)
+    except OllamaError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno ejecutando el chatbot RAG.",
+        ) from exc
 
 
 @app.get("/levels")

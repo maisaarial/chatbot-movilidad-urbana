@@ -164,3 +164,148 @@ Get-Item data\processed\cameras.csv
 Get-Item data\raw\congestion_raw.json
 Get-Item data\processed\congestion.csv
 ```
+
+## Pruebas Del Chatbot RAG
+
+### Reconstruccion Del Indice
+
+Comando:
+
+```powershell
+.venv\Scripts\python scripts\build_rag_index.py
+```
+
+Resultado obtenido:
+
+```text
+RAG index rebuilt: 1412 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+```
+
+Estado: Paso.
+
+### Recuperacion Con Consulta `A-8`
+
+Comando:
+
+```powershell
+.venv\Scripts\python -c "from src.rag.retriever import retrieve; results=retrieve('A-8', k=5); print('results', len(results)); [print(i+1, r['metadata'].get('document_type'), r['metadata'].get('carretera'), r['distance'], r['text'][:140].replace('\n',' ')) for i,r in enumerate(results)]"
+```
+
+Resultado obtenido:
+
+```text
+results 5
+1 incidencia A-8 0.0 id: 363423...
+2 incidencia A-8 0.0 id: 363420...
+3 incidencia A-8 0.0 id: 363409...
+4 incidencia A-8 0.0 id: 363408...
+5 incidencia A-8 0.0 id: 363407...
+```
+
+Estado: Paso.
+
+### Comprobacion De Ollama
+
+Comando:
+
+```powershell
+curl.exe -s --max-time 5 "http://localhost:11434/api/tags"
+```
+
+Resultado obtenido en este entorno:
+
+```json
+{
+  "models": [
+    {
+      "name": "qwen2.5:3b",
+      "model": "qwen2.5:3b"
+    }
+  ]
+}
+```
+
+Interpretacion:
+
+El servicio local de Ollama esta arrancado en `http://localhost:11434` y el modelo `qwen2.5:3b` esta disponible. En este equipo el comando `ollama --version` no esta disponible en PowerShell porque el ejecutable no esta en el `PATH`, pero la API local si responde correctamente.
+
+Si el modelo no apareciera en la lista, el comando necesario seria:
+
+```powershell
+ollama pull qwen2.5:3b
+```
+
+Estado: Paso.
+
+### POST `/chat`
+
+Antes de repetir la prueba se ajusto `OLLAMA_TIMEOUT=120` para dar margen suficiente a la generacion local y se limito la respuesta con `num_predict=220`.
+
+Comando:
+
+```powershell
+$body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json" -TimeoutSec 180 | ConvertTo-Json -Depth 8
+```
+
+Resultado obtenido:
+
+```text
+answer: Si, hay varias incidencias registradas en la carretera A-8 recientemente.
+sources: 5 fuentes
+source 1: incidencia | A-8 | Bilbao | BIZKAIA | 2026-05-11T17:28
+source 2: incidencia | A-8 | Galdakao | BIZKAIA | 2026-05-11T16:47:35
+source 3: incidencia | A-8 | Gipuzkoa | 2026-05-11T14:15:04
+source 4: incidencia | A-8 | Gipuzkoa | 2026-05-11T14:15:04
+source 5: incidencia | A-8 | Bizkaia | 2026-05-11T14:15:04
+```
+
+Estado: Paso.
+
+### Pregunta Fuera De Dominio
+
+Comando:
+
+```powershell
+$body = @{ question = "Cual es la poblacion de Paris?" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json" -TimeoutSec 180
+"answer=$($r.answer)"
+"sources=$($r.sources.Count)"
+```
+
+Resultado obtenido:
+
+```text
+answer=No encontre informacion suficiente en las fuentes disponibles.
+sources=0
+```
+
+Estado: Paso.
+
+### Frontend Con Pestaña Chatbot
+
+Comando:
+
+```powershell
+curl.exe -I --max-time 10 "http://127.0.0.1:8501"
+```
+
+Resultado obtenido:
+
+```text
+HTTP/1.1 200 OK
+Server: TornadoServer/6.5.5
+```
+
+Estado: Paso.
+
+### Error Controlado Si Ollama No Esta Disponible
+
+Comportamiento esperado si Ollama no esta instalado, no esta arrancado o el modelo no esta descargado:
+
+```text
+HTTP 503 con mensaje indicando que no se pudo conectar con Ollama y que se debe ejecutar:
+ollama pull qwen2.5:3b
+```
+
+Estado: implementado en `src/rag/ollama_client.py` y expuesto por `backend/main.py`.

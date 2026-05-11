@@ -21,8 +21,12 @@ class Settings(BaseSettings):
     raw_data_dir: Path = Path("data/raw")
     processed_data_dir: Path = Path("data/processed")
     backend_url: str = "http://localhost:8000"
-    chroma_persist_dir: Path = Path(".chroma")
+    chroma_persist_dir: Path = Path("data/vectorstore")
     chroma_collection_name: str = "movilidad_urbana"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:3b"
+    ollama_timeout: int = 120
+    rag_top_k: int = 5
 
     model_config = SettingsConfigDict(
         env_file=".env",

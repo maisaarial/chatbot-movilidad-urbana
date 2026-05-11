@@ -10,8 +10,10 @@ env/
 .chroma/
 data/raw/*
 data/processed/*
+data/vectorstore/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/vectorstore/.gitkeep
 
 .pytest_cache/
 .mypy_cache/

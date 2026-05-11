@@ -55,7 +55,7 @@ Sus responsabilidades son:
 - Mostrar registros de congestion.
 - Filtrar congestion por carretera y nivel.
 - Mostrar resumen de conteo por nivel.
-- Probar la busqueda RAG inicial.
+- Usar el chatbot RAG local y mostrar las fuentes recuperadas.
 
 Streamlit no consulta directamente Trafikoa. Toda la comunicacion externa se hace a traves del backend FastAPI.
 
@@ -80,6 +80,7 @@ Endpoints principales:
 | `/congestion` | Devuelve registros de congestion calculados con flows reales. |
 | `/rag/documents` | Indexa documentos en ChromaDB. |
 | `/rag/search` | Busca documentos indexados. |
+| `/chat` | Responde preguntas con RAG y Ollama local. |
 
 ## Conexion Trafikoa
 
@@ -116,9 +117,9 @@ La congestion se calcula en dos niveles:
 
 La variable usada actualmente es `totalVehicles`, procedente de los flows de Trafikoa.
 
-## RAG Futuro
+## RAG
 
-El proyecto incluye una primera base RAG en `src/rag/vector_store.py` con ChromaDB. Actualmente permite indexar documentos enviados al endpoint `/rag/documents` y buscarlos con `/rag/search`.
+El proyecto incluye una base RAG en `src/rag/` con ChromaDB y Ollama local. El indice se reconstruye desde los CSV procesados mediante `scripts/build_rag_index.py`.
 
 Los registros de congestion ya incluyen el campo `rag_text`, por ejemplo:
 
@@ -126,4 +127,15 @@ Los registros de congestion ya incluyen el campo `rag_text`, por ejemplo:
 Congestion media en medidor:248, Bilbao, Bizkaia. Valor de trafico: 86.0 vehiculos/intervalo. Fecha: 2026-05-11T08:25. Fuente: Ayuntamiento Bilbao.
 ```
 
-Esto facilita que, en una fase posterior, las incidencias, camaras y congestion puedan convertirse en documentos para consulta semantica.
+Esto permite que incidencias, camaras y congestion se consulten como documentos recuperables por el chatbot.
+
+El endpoint `/chat` usa el flujo:
+
+```text
+Pregunta del usuario
+  -> retrieve(query, k)
+  -> contexto recuperado desde ChromaDB
+  -> prompt estricto
+  -> Ollama local
+  -> respuesta + fuentes
+```

@@ -11,7 +11,8 @@ El objetivo del proyecto es construir una base tecnica defendible para un chatbo
 - Descargar mediciones reales de flujo de trafico.
 - Clasificar congestion en baja, media o alta.
 - Guardar datos procesados en CSV.
-- Preparar textos para una futura indexacion RAG.
+- Indexar textos en ChromaDB para el chatbot RAG.
+- Preguntar en lenguaje natural con un chatbot RAG usando Ollama local.
 - Exponer la funcionalidad mediante FastAPI y Streamlit.
 
 ## Arquitectura General
@@ -43,7 +44,7 @@ backend/              API con FastAPI
 frontend/             Interfaz simple con Streamlit
 src/                  Logica de negocio
 src/trafikoa/         Cliente y descargas desde Trafikoa Euskadi
-src/rag/              Vector store basico con ChromaDB
+src/rag/              Indexacion RAG, recuperacion y cliente Ollama
 data/raw/             Respuestas originales descargadas
 data/processed/       CSV normalizados
 docs/                 Documentacion tecnica del proyecto
@@ -62,6 +63,11 @@ docs/                 Documentacion tecnica del proyecto
 | `src/trafikoa/congestion.py` | Descarga flows/meters y genera registros de congestion. |
 | `src/congestion.py` | Reglas generales de clasificacion baja/media/alta. |
 | `src/rag/vector_store.py` | Vector store inicial con ChromaDB. |
+| `src/rag/indexer.py` | Construye el indice RAG desde CSV procesados. |
+| `src/rag/retriever.py` | Recupera documentos relevantes desde ChromaDB. |
+| `src/rag/ollama_client.py` | Cliente HTTP para Ollama local. |
+| `src/rag/chatbot.py` | Orquesta retrieve, prompt y respuesta del LLM local. |
+| `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
 
 ## Requisitos
 
@@ -79,6 +85,33 @@ copy .env.example .env
 ```
 
 Edita `.env` si necesitas ajustar la URL, rutas, umbrales o credenciales de Trafikoa.
+
+Para usar el chatbot RAG con LLM local instala Ollama y descarga el modelo:
+
+```powershell
+ollama pull qwen2.5:3b
+```
+
+El modelo se puede cambiar en `.env`:
+
+```text
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_TIMEOUT=120
+```
+
+## Reconstruir Indice RAG
+
+Antes de usar el chatbot, genera el indice de ChromaDB desde los CSV procesados:
+
+```powershell
+.venv\Scripts\python scripts\build_rag_index.py
+```
+
+El indice se guarda en:
+
+```text
+data/vectorstore
+```
 
 ## Ejecutar Backend
 
@@ -126,6 +159,7 @@ http://127.0.0.1:8501
 | `GET` | `/levels` | Lista niveles de congestion internos. |
 | `POST` | `/rag/documents` | Indexa documentos de texto en ChromaDB. |
 | `GET` | `/rag/search` | Busca documentos indexados. |
+| `POST` | `/chat` | Responde preguntas usando RAG y Ollama local. |
 
 ## Archivos Generados
 
@@ -137,12 +171,14 @@ http://127.0.0.1:8501
 | `data/processed/cameras.csv` | Camaras normalizadas. |
 | `data/raw/congestion_raw.json` | Respuesta original de flows/meters usada para congestion. |
 | `data/processed/congestion.csv` | Registros de congestion normalizados y preparados para RAG. |
+| `data/vectorstore/` | Indice ChromaDB reconstruido desde los CSV procesados. |
 
 ## Documentacion
 
 - [Arquitectura](docs/arquitectura.md)
 - [API Trafikoa](docs/trafikoa_api.md)
 - [Calculo de Congestion](docs/congestion.md)
+- [RAG y Ollama](docs/rag.md)
 - [Pruebas](docs/pruebas.md)
 - [Uso Local](docs/uso_local.md)
 
@@ -152,4 +188,4 @@ El proyecto cuenta con una primera version funcional. El backend y el frontend a
 
 La clasificacion de congestion es una primera aproximacion por umbrales sobre `totalVehicles`, con unidad `vehiculos/intervalo`. No se usan datos inventados. Cuando Trafikoa no proporciona nombre de carretera para un medidor, se conserva un identificador real de medidor.
 
-El modulo RAG existe como base tecnica con ChromaDB, pero todavia no integra automaticamente todos los registros generados. Los registros de congestion ya incluyen `rag_text` para facilitar esa extension posterior.
+El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El chatbot usa recuperacion desde ese indice y llama a Ollama local. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.

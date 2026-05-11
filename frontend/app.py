@@ -13,13 +13,23 @@ st.caption("Primera version funcional para consultar Trafikoa y probar RAG.")
 
 api_url = st.sidebar.text_input("Backend URL", value=settings.backend_url)
 
-tab_incidents, tab_cameras, tab_congestion, tab_rag = st.tabs(
-    ["Incidencias", "Camaras", "Congestion", "RAG"]
+tab_incidents, tab_cameras, tab_congestion, tab_chatbot, tab_rag = st.tabs(
+    ["Incidencias", "Camaras", "Congestion", "Chatbot", "RAG"]
 )
 
 
 def get_json(path: str, params: dict | None = None) -> dict:
     response = requests.get(f"{api_url}{path}", params=params, timeout=20)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as exc:
+        detail = _extract_error_detail(response)
+        raise requests.HTTPError(detail, response=response) from exc
+    return response.json()
+
+
+def post_json(path: str, payload: dict) -> dict:
+    response = requests.post(f"{api_url}{path}", json=payload, timeout=180)
     try:
         response.raise_for_status()
     except requests.HTTPError as exc:
@@ -140,6 +150,41 @@ with tab_congestion:
         st.dataframe(filtered_rows, use_container_width=True, hide_index=True)
     else:
         st.info("Pulsa el boton para descargar mediciones reales de Trafikoa.")
+
+with tab_chatbot:
+    st.subheader("Chatbot RAG")
+    question = st.text_input(
+        "Pregunta",
+        placeholder="Ej. Hay congestion en Bilbao? Hay camaras con imagen?",
+    )
+    if st.button("Preguntar", use_container_width=True):
+        try:
+            payload = post_json("/chat", {"question": question})
+            st.session_state["chat_answer"] = payload.get("answer", "")
+            st.session_state["chat_sources"] = payload.get("sources", [])
+        except requests.RequestException as exc:
+            st.error(f"No se pudo ejecutar el chatbot: {exc}")
+
+    answer = st.session_state.get("chat_answer")
+    sources = st.session_state.get("chat_sources", [])
+    if answer:
+        st.markdown("**Respuesta**")
+        st.write(answer)
+
+    if sources:
+        st.markdown("**Fuentes usadas**")
+        for index, source in enumerate(sources, start=1):
+            metadata = source.get("metadata", {})
+            label = metadata.get("document_type") or metadata.get("tipo") or f"Fuente {index}"
+            with st.expander(f"{index}. {label}"):
+                st.write(source.get("text", ""))
+                st.json(metadata)
+                image_url = metadata.get("image_url")
+                if image_url:
+                    if image_url.startswith("http://"):
+                        st.markdown(f"[Abrir imagen]({image_url})")
+                    else:
+                        st.image(image_url, use_container_width=True)
 
 with tab_rag:
     st.subheader("Busqueda RAG basica")
