@@ -3,6 +3,7 @@ import unicodedata
 from typing import Any
 
 from src.config import settings
+from src.rag.index_manager import refresh_index_if_stale
 from src.rag.vector_store import VectorStore
 
 STOPWORDS = {
@@ -44,6 +45,7 @@ def retrieve(query: str, k: int = 5) -> list[dict[str, Any]]:
     if not query.strip():
         return []
 
+    refresh_index_if_stale()
     vector_store = VectorStore.from_env()
     vector_results = vector_store.search(query=query, limit=max(k * 4, k))
     exact_results = _exact_matches(vector_store, query, limit=k)

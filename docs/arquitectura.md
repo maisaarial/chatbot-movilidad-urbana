@@ -80,6 +80,8 @@ Endpoints principales:
 | `/congestion` | Devuelve registros de congestion calculados con flows reales. |
 | `/rag/documents` | Indexa documentos en ChromaDB. |
 | `/rag/search` | Busca documentos indexados. |
+| `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
+| `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `/chat` | Responde preguntas con RAG y Ollama local. |
 
 ## Conexion Trafikoa
@@ -120,6 +122,8 @@ La variable usada actualmente es `totalVehicles`, procedente de los flows de Tra
 ## RAG
 
 El proyecto incluye una base RAG en `src/rag/` con ChromaDB y Ollama local. El indice se reconstruye desde los CSV procesados mediante `scripts/build_rag_index.py`.
+
+El modulo `src/rag/index_manager.py` controla el TTL del indice. Por defecto, `RAG_INDEX_TTL_SECONDS=300`, equivalente a 5 minutos. Antes de consultar el RAG, el sistema comprueba si el indice ha caducado; si esta caducado, lo reconstruye automaticamente desde los CSV procesados.
 
 Los registros de congestion ya incluyen el campo `rag_text`, por ejemplo:
 

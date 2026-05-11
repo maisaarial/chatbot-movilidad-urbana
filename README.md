@@ -97,6 +97,7 @@ El modelo se puede cambiar en `.env`:
 ```text
 OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_TIMEOUT=180
+RAG_INDEX_TTL_SECONDS=300
 ```
 
 ## Reconstruir Indice RAG
@@ -159,6 +160,8 @@ http://127.0.0.1:8501
 | `GET` | `/levels` | Lista niveles de congestion internos. |
 | `POST` | `/rag/documents` | Indexa documentos de texto en ChromaDB. |
 | `GET` | `/rag/search` | Busca documentos indexados. |
+| `GET` | `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
+| `POST` | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `POST` | `/chat` | Responde preguntas usando RAG y Ollama local. |
 
 ## Archivos Generados
@@ -171,7 +174,7 @@ http://127.0.0.1:8501
 | `data/processed/cameras.csv` | Camaras normalizadas. |
 | `data/raw/congestion_raw.json` | Respuesta original de flows/meters usada para congestion. |
 | `data/processed/congestion.csv` | Registros de congestion normalizados y preparados para RAG. |
-| `data/vectorstore/` | Indice ChromaDB reconstruido desde los CSV procesados. |
+| `data/vectorstore/` | Indice ChromaDB y estado TTL reconstruidos desde los CSV procesados. |
 
 ## Documentacion
 
@@ -188,4 +191,4 @@ El proyecto cuenta con una primera version funcional. El backend y el frontend a
 
 La clasificacion de congestion es una primera aproximacion por umbrales sobre `totalVehicles`, con unidad `vehiculos/intervalo`. No se usan datos inventados. Cuando Trafikoa no proporciona nombre de carretera para un medidor, se conserva un identificador real de medidor.
 
-El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El chatbot usa recuperacion desde ese indice y llama a Ollama local. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.
+El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El indice se refresca automaticamente por TTL cada 5 minutos cuando se consulta el RAG, y tambien puede reconstruirse manualmente con `POST /rag/refresh` o desde Streamlit. El chatbot usa recuperacion desde ese indice y llama a Ollama local. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.

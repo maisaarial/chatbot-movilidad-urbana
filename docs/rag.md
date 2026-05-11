@@ -13,6 +13,7 @@ No se usan APIs pagas. No se usa OpenAI API. El modelo generativo se ejecuta loc
 | Indexador | `src/rag/indexer.py` | Lee CSV procesados y crea documentos para ChromaDB. |
 | Script | `scripts/build_rag_index.py` | Reconstruye el indice desde consola. |
 | Vector store | `src/rag/vector_store.py` | Gestiona ChromaDB y embeddings locales. |
+| Gestor de indice | `src/rag/index_manager.py` | Controla TTL, estado y refresco automatico del indice. |
 | Retriever | `src/rag/retriever.py` | Recupera documentos relevantes para una consulta. |
 | Cliente Ollama | `src/rag/ollama_client.py` | Llama al endpoint local de Ollama. |
 | Chatbot | `src/rag/chatbot.py` | Construye contexto, prompt y respuesta final. |
@@ -76,7 +77,36 @@ Configuracion en `.env`:
 ```text
 CHROMA_PERSIST_DIR=data/vectorstore
 CHROMA_COLLECTION_NAME=movilidad_urbana
+RAG_INDEX_TTL_SECONDS=300
 ```
+
+## TTL Y Refresco Automatico
+
+El indice RAG tiene un TTL configurable. Por defecto es de 300 segundos, es decir, 5 minutos.
+
+```text
+RAG_INDEX_TTL_SECONDS=300
+```
+
+El refresco es automatico bajo demanda: antes de recuperar documentos en `retrieve()`, el sistema consulta `src/rag/index_manager.py`. Si el indice ha caducado o no existe estado previo, se reconstruye desde los CSV procesados.
+
+El estado se guarda en:
+
+```text
+data/vectorstore/rag_status.json
+```
+
+Campos principales del estado:
+
+| Campo | Significado |
+|---|---|
+| `last_refresh_at` | Fecha/hora UTC de la ultima reconstruccion. |
+| `ttl_seconds` | Tiempo de vida configurado. |
+| `age_seconds` | Edad actual del indice. |
+| `expires_at` | Momento en que caduca. |
+| `is_stale` | Indica si el indice esta caducado. |
+| `documents_indexed` | Numero de documentos indexados. |
+| `last_error` | Ultimo error de reconstruccion si existe. |
 
 ## Reconstruir El Indice
 
@@ -233,6 +263,36 @@ Comando:
 $body = @{ question = "Hay congestion en Bilbao?" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
 ```
+
+## Endpoints De Gestion RAG
+
+### `GET /rag/status`
+
+Devuelve el estado actual del indice, incluyendo TTL, edad, fecha de caducidad y numero de documentos.
+
+Comando:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status"
+```
+
+### `POST /rag/refresh`
+
+Reconstruye manualmente el indice desde:
+
+```text
+data/processed/incidents.csv
+data/processed/cameras.csv
+data/processed/congestion.csv
+```
+
+Comando:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/rag/refresh"
+```
+
+Streamlit incluye un boton `Actualizar indice RAG ahora` en la pestana `RAG`. Ese boton llama a `POST /rag/refresh` y muestra el estado devuelto.
 
 ## Limitaciones
 

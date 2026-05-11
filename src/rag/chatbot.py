@@ -214,6 +214,7 @@ def _build_prompt(question: str, context: str) -> str:
         "Respuesta:"
     )
 
+
 def _field(metadata: dict[str, Any], key: str) -> str:
     value = metadata.get(key)
     if value is None or str(value).strip() == "":

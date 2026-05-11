@@ -5,11 +5,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.rag.indexer import build_index
+from src.rag.index_manager import refresh_index
 
 
 def main() -> None:
-    result = build_index(reset=True)
+    result = refresh_index(reason="script")
     print(
         "RAG index rebuilt: "
         f"{result['documents_indexed']} documents, "

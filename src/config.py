@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:3b"
     ollama_timeout: int = 180
     rag_top_k: int = 5
+    rag_index_ttl_seconds: int = 300
 
     model_config = SettingsConfigDict(
         env_file=".env",

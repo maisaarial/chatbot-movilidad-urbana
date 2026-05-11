@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from src.config import settings
 from src.congestion import CongestionLevel, calcular_congestion
 from src.rag.chatbot import answer_question
+from src.rag.index_manager import get_index_status, refresh_index, refresh_index_if_stale
 from src.rag.ollama_client import OllamaError
 from src.rag.vector_store import VectorStore
 from src.trafikoa.cameras import get_cameras
@@ -20,7 +21,6 @@ app = FastAPI(
 )
 
 trafikoa_client = TrafikoaClient.from_env()
-vector_store = VectorStore.from_env()
 
 
 class ChatRequest(BaseModel):
@@ -159,14 +159,37 @@ def add_documents(documents: list[str]) -> dict[str, Any]:
     if not documents:
         raise HTTPException(status_code=400, detail="Debes enviar al menos un documento.")
 
-    ids = vector_store.add_documents(documents)
+    ids = VectorStore.from_env().add_documents(documents)
     return {"count": len(ids), "ids": ids}
 
 
 @app.get("/rag/search")
 def rag_search(query: str, limit: int = Query(3, ge=1, le=10)) -> dict[str, Any]:
-    results = vector_store.search(query=query, limit=limit)
-    return {"query": query, "results": results}
+    try:
+        index_status = refresh_index_if_stale()
+        results = VectorStore.from_env().search(query=query, limit=limit)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error actualizando o consultando el indice RAG: {exc}",
+        ) from exc
+    return {"query": query, "index_status": index_status, "results": results}
+
+
+@app.get("/rag/status")
+def rag_status() -> dict[str, Any]:
+    return get_index_status()
+
+
+@app.post("/rag/refresh")
+def rag_refresh() -> dict[str, Any]:
+    try:
+        return refresh_index(reason="manual")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error reconstruyendo el indice RAG: {exc}",
+        ) from exc
 
 
 @app.post("/chat")

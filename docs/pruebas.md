@@ -204,6 +204,71 @@ results 5
 
 Estado: Paso.
 
+### Estado Del Indice RAG
+
+Comando:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status" -TimeoutSec 20 | ConvertTo-Json -Depth 5
+```
+
+Resultado obtenido:
+
+```text
+documents_indexed=1412
+ttl_seconds=300
+is_stale=False
+status=ready
+```
+
+Estado: Paso.
+
+### Refresco Manual Del Indice RAG
+
+Comando:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/rag/refresh" -TimeoutSec 180 | ConvertTo-Json -Depth 5
+```
+
+Resultado obtenido:
+
+```text
+refreshed=True
+last_refresh_reason=manual
+documents_indexed=1412
+is_stale=False
+```
+
+Estado: Paso.
+
+### Refresco Automatico Por TTL
+
+Para no esperar 5 minutos reales, se forzo temporalmente una fecha antigua en `data/vectorstore/rag_status.json`.
+
+Comando:
+
+```powershell
+.venv\Scripts\python -c "import json, pathlib; p=pathlib.Path('data/vectorstore/rag_status.json'); s=json.loads(p.read_text(encoding='utf-8')); s['last_refresh_at']='2000-01-01T00:00:00+00:00'; p.write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding='utf-8'); print('status forced stale')"
+$s = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status" -TimeoutSec 20
+"before stale=$($s.is_stale)"
+$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/search?query=A-8&limit=2" -TimeoutSec 180
+"after refreshed=$($r.index_status.refreshed) reason=$($r.index_status.last_refresh_reason) stale=$($r.index_status.is_stale) results=$($r.results.Count)"
+```
+
+Resultado obtenido:
+
+```text
+before stale=True
+after refreshed=True reason=ttl_expired stale=False results=2
+```
+
+Interpretacion:
+
+El endpoint de busqueda detecto que el indice habia caducado y lo reconstruyo automaticamente antes de devolver resultados.
+
+Estado: Paso.
+
 ### Comprobacion De Ollama
 
 Comando:
@@ -317,6 +382,8 @@ Server: TornadoServer/6.5.5
 ```
 
 Estado: Paso.
+
+La pestana `RAG` tambien incluye el boton `Actualizar indice RAG ahora`, que llama a `POST /rag/refresh` y muestra el estado actualizado del indice.
 
 ### Error Controlado Si Ollama No Esta Disponible
 

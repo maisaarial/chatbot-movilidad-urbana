@@ -123,6 +123,7 @@ Configuracion recomendada en `.env`:
 ```text
 OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_TIMEOUT=180
+RAG_INDEX_TTL_SECONDS=300
 ```
 
 Prueba el endpoint:
@@ -130,6 +131,18 @@ Prueba el endpoint:
 ```powershell
 $body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+```
+
+Consulta el estado del indice RAG:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status"
+```
+
+Reconstruye el indice manualmente:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/rag/refresh"
 ```
 
 ## Apagar Servidores

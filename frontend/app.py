@@ -28,7 +28,7 @@ def get_json(path: str, params: dict | None = None) -> dict:
     return response.json()
 
 
-def post_json(path: str, payload: dict) -> dict:
+def post_json(path: str, payload: dict | None = None) -> dict:
     response = requests.post(f"{api_url}{path}", json=payload, timeout=240)
     try:
         response.raise_for_status()
@@ -82,6 +82,25 @@ def _source_value(metadata: dict, key: str) -> str:
     if value is None or str(value).strip() == "":
         return "no disponible"
     return str(value)
+
+
+def _display_rag_status(status: dict) -> None:
+    col_docs, col_age, col_ttl, col_state = st.columns(4)
+    col_docs.metric("Documentos", status.get("documents_indexed", 0))
+    age = status.get("age_seconds")
+    col_age.metric("Edad", "n/d" if age is None else f"{int(age)} s")
+    col_ttl.metric("TTL", f"{status.get('ttl_seconds', 0)} s")
+    col_state.metric("Caducado", "si" if status.get("is_stale") else "no")
+
+    details = {
+        "estado": status.get("status"),
+        "ultima_actualizacion": status.get("last_refresh_at"),
+        "proxima_caducidad": status.get("expires_at"),
+        "coleccion": status.get("collection"),
+        "directorio": status.get("persist_dir"),
+        "ultimo_error": status.get("last_error"),
+    }
+    st.table([details])
 
 
 with tab_incidents:
@@ -227,6 +246,20 @@ with tab_chatbot:
                 st.json(metadata)
 
 with tab_rag:
+    st.subheader("Estado RAG")
+    if st.button("Actualizar indice RAG ahora", use_container_width=True):
+        try:
+            st.session_state["rag_status"] = post_json("/rag/refresh")
+            st.success("Indice RAG actualizado.")
+        except requests.RequestException as exc:
+            st.error(f"No se pudo actualizar el indice RAG: {exc}")
+
+    try:
+        rag_status = st.session_state.get("rag_status") or get_json("/rag/status")
+        _display_rag_status(rag_status)
+    except requests.RequestException as exc:
+        st.error(f"No se pudo obtener el estado RAG: {exc}")
+
     st.subheader("Busqueda RAG basica")
     documents = st.text_area(
         "Documentos para indexar",

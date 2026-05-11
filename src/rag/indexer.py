@@ -12,6 +12,7 @@ CSV_SPECS = [
     ("congestion", "congestion.csv"),
 ]
 
+
 def build_index(reset: bool = True) -> dict[str, Any]:
     vector_store = VectorStore.from_env()
     if reset:
