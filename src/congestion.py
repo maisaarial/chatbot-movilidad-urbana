@@ -7,6 +7,21 @@ class CongestionLevel(str, Enum):
     HIGH = "alta"
 
 
+def calcular_congestion(
+    valor: float,
+    umbral_bajo: float,
+    umbral_alto: float,
+) -> CongestionLevel:
+    if umbral_bajo >= umbral_alto:
+        raise ValueError("umbral_bajo must be lower than umbral_alto")
+
+    if valor < umbral_bajo:
+        return CongestionLevel.LOW
+    if valor < umbral_alto:
+        return CongestionLevel.MEDIUM
+    return CongestionLevel.HIGH
+
+
 def calculate_congestion_level(
     speed_kmh: float,
     free_flow_speed_kmh: float = 80,

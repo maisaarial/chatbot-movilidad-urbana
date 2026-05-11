@@ -8,6 +8,10 @@ env/
 
 .env
 .chroma/
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 .pytest_cache/
 .mypy_cache/

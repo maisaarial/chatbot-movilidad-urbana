@@ -2,11 +2,13 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 
-from src.congestion import CongestionLevel, calculate_congestion_level
+from src.config import settings
+from src.congestion import CongestionLevel, calcular_congestion
 from src.rag.vector_store import VectorStore
-from src.trafikoa.cameras import download_cameras
-from src.trafikoa.client import TrafikoaClient
-from src.trafikoa.incidents import download_incidents
+from src.trafikoa.cameras import get_cameras
+from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
+from src.trafikoa.congestion import get_congestion_records
+from src.trafikoa.incidents import get_current_incidents
 
 app = FastAPI(
     title="Chatbot Movilidad Urbana",
@@ -23,39 +25,125 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/incidencias")
+def incidencias() -> dict[str, Any]:
+    try:
+        data = get_current_incidents(trafikoa_client)
+    except TrafikoaAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno procesando incidencias de Trafikoa.",
+        ) from exc
+    return {"count": len(data), "items": data}
+
+
 @app.get("/incidents")
 def incidents() -> dict[str, Any]:
+    return incidencias()
+
+
+@app.get("/camaras")
+def camaras() -> dict[str, Any]:
     try:
-        data = download_incidents(trafikoa_client)
-    except Exception as exc:
+        data = get_cameras(trafikoa_client)
+    except TrafikoaAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno procesando camaras de Trafikoa.",
+        ) from exc
     return {"count": len(data), "items": data}
 
 
 @app.get("/cameras")
 def cameras() -> dict[str, Any]:
-    try:
-        data = download_cameras(trafikoa_client)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return {"count": len(data), "items": data}
+    return camaras()
 
 
 @app.get("/congestion")
 def congestion(
+    valor: float | None = Query(
+        None,
+        ge=0,
+        description="Valor puntual para clasificar sin consultar Trafikoa.",
+    ),
+    umbral_bajo: float = Query(
+        settings.congestion_low_threshold,
+        ge=0,
+        description="Umbral bajo para valor_trafico.",
+    ),
+    umbral_alto: float = Query(
+        settings.congestion_high_threshold,
+        ge=0,
+        description="Umbral alto para valor_trafico.",
+    ),
+    max_pages: int | None = Query(
+        None,
+        ge=1,
+        le=500,
+        description="Maximo de paginas de flows a descargar.",
+    ),
+    source_id: int | None = Query(
+        settings.trafikoa_congestion_source_id,
+        ge=1,
+        le=7,
+        description="Fuente Trafikoa para flows. Por defecto, Ayuntamiento Bilbao.",
+    ),
+) -> dict[str, Any]:
+    if valor is not None:
+        try:
+            level = calcular_congestion(
+                valor=valor,
+                umbral_bajo=umbral_bajo,
+                umbral_alto=umbral_alto,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"level": level.value}
+
+    try:
+        data = get_congestion_records(
+            trafikoa_client,
+            umbral_bajo=umbral_bajo,
+            umbral_alto=umbral_alto,
+            max_pages=max_pages,
+            source_id=source_id,
+        )
+    except TrafikoaAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno procesando congestion de Trafikoa.",
+        ) from exc
+
+    return {
+        "count": len(data),
+        "thresholds": {
+            "umbral_bajo": umbral_bajo,
+            "umbral_alto": umbral_alto,
+            "unidad": "vehiculos/intervalo",
+        },
+        "items": data,
+    }
+
+
+@app.get("/congestion/demo-speed")
+def congestion_demo_speed(
     speed_kmh: float = Query(..., ge=0, description="Velocidad media actual en km/h."),
     free_flow_speed_kmh: float = Query(
         80,
         gt=0,
         description="Velocidad esperada en condiciones fluidas.",
-    ),
-    incidents_count: int = Query(0, ge=0, description="Numero de incidencias cercanas."),
-) -> dict[str, str]:
-    level = calculate_congestion_level(
-        speed_kmh=speed_kmh,
-        free_flow_speed_kmh=free_flow_speed_kmh,
-        incidents_count=incidents_count,
     )
+):
+    ratio_value = max(free_flow_speed_kmh - speed_kmh, 0)
+    level = calcular_congestion(ratio_value, 20, 45)
     return {"level": level.value}
 
 

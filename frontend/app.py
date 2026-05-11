@@ -1,3 +1,5 @@
+from collections import Counter
+
 import requests
 import streamlit as st
 
@@ -18,53 +20,126 @@ tab_incidents, tab_cameras, tab_congestion, tab_rag = st.tabs(
 
 def get_json(path: str, params: dict | None = None) -> dict:
     response = requests.get(f"{api_url}{path}", params=params, timeout=20)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as exc:
+        detail = _extract_error_detail(response)
+        raise requests.HTTPError(detail, response=response) from exc
     return response.json()
+
+
+def _extract_error_detail(response: requests.Response) -> str:
+    try:
+        payload = response.json()
+    except ValueError:
+        return response.text or str(response.status_code)
+    return str(payload.get("detail") or payload)
 
 
 with tab_incidents:
     st.subheader("Incidencias")
     if st.button("Descargar incidencias", use_container_width=True):
         try:
-            payload = get_json("/incidents")
-            st.metric("Total", payload["count"])
-            st.dataframe(payload["items"], use_container_width=True)
+            payload = get_json("/incidencias")
+            st.session_state["incidents"] = payload["items"]
         except requests.RequestException as exc:
             st.error(f"No se pudieron descargar las incidencias: {exc}")
+
+    incidents = st.session_state.get("incidents", [])
+    st.metric("Total", len(incidents))
+    if incidents:
+        st.dataframe(incidents, use_container_width=True, hide_index=True)
+    else:
+        st.info("Pulsa el boton para descargar incidencias reales desde Trafikoa.")
 
 with tab_cameras:
     st.subheader("Camaras")
     if st.button("Descargar camaras", use_container_width=True):
         try:
-            payload = get_json("/cameras")
-            st.metric("Total", payload["count"])
-            st.dataframe(payload["items"], use_container_width=True)
+            payload = get_json("/camaras")
+            st.session_state["cameras"] = payload["items"]
         except requests.RequestException as exc:
             st.error(f"No se pudieron descargar las camaras: {exc}")
 
-with tab_congestion:
-    st.subheader("Nivel de congestion")
-    speed = st.number_input("Velocidad media actual (km/h)", min_value=0.0, value=45.0)
-    free_flow_speed = st.number_input(
-        "Velocidad fluida esperada (km/h)",
-        min_value=1.0,
-        value=80.0,
-    )
-    incidents_count = st.number_input("Incidencias cercanas", min_value=0, value=0)
+    cameras = st.session_state.get("cameras", [])
+    st.metric("Total", len(cameras))
+    if cameras:
+        st.dataframe(cameras, use_container_width=True, hide_index=True)
 
-    if st.button("Calcular congestion", use_container_width=True):
+        cameras_with_image = [camera for camera in cameras if camera.get("image_url")]
+        if cameras_with_image:
+            labels = [
+                f"{camera.get('id', '')} - {camera.get('nombre', '')}"
+                for camera in cameras_with_image
+            ]
+            selected_label = st.selectbox("Camara con imagen", labels)
+            selected_camera = cameras_with_image[labels.index(selected_label)]
+            st.image(
+                selected_camera["image_url"],
+                caption=selected_camera.get("nombre", ""),
+                use_container_width=True,
+            )
+        else:
+            st.info("No se han encontrado camaras con image_url.")
+    else:
+        st.info("Pulsa el boton para descargar camaras reales desde Trafikoa.")
+
+with tab_congestion:
+    st.subheader("Congestion")
+    col_low, col_high, col_pages = st.columns(3)
+    with col_low:
+        umbral_bajo = st.number_input("Umbral bajo", min_value=0.0, value=50.0)
+    with col_high:
+        umbral_alto = st.number_input("Umbral alto", min_value=1.0, value=150.0)
+    with col_pages:
+        max_pages = st.number_input("Paginas flows", min_value=1, max_value=500, value=25)
+
+    if st.button("Descargar congestion", use_container_width=True):
         try:
             payload = get_json(
                 "/congestion",
                 params={
-                    "speed_kmh": speed,
-                    "free_flow_speed_kmh": free_flow_speed,
-                    "incidents_count": incidents_count,
+                    "umbral_bajo": umbral_bajo,
+                    "umbral_alto": umbral_alto,
+                    "max_pages": max_pages,
                 },
             )
-            st.success(f"Nivel estimado: {payload['level']}")
+            st.session_state["congestion"] = payload["items"]
         except requests.RequestException as exc:
-            st.error(f"No se pudo calcular la congestion: {exc}")
+            st.error(f"No se pudo descargar la congestion: {exc}")
+
+    congestion_rows = st.session_state.get("congestion", [])
+    st.metric("Registros", len(congestion_rows))
+
+    if congestion_rows:
+        roads = sorted({row.get("carretera", "") for row in congestion_rows if row.get("carretera")})
+        levels = ["baja", "media", "alta"]
+
+        col_road, col_level = st.columns(2)
+        with col_road:
+            selected_road = st.selectbox("Carretera", ["Todas"] + roads)
+        with col_level:
+            selected_level = st.selectbox("Nivel", ["Todos"] + levels)
+
+        filtered_rows = congestion_rows
+        if selected_road != "Todas":
+            filtered_rows = [
+                row for row in filtered_rows if row.get("carretera") == selected_road
+            ]
+        if selected_level != "Todos":
+            filtered_rows = [
+                row for row in filtered_rows if row.get("congestion") == selected_level
+            ]
+
+        counts = Counter(row.get("congestion", "") for row in filtered_rows)
+        low_col, medium_col, high_col = st.columns(3)
+        low_col.metric("Baja", counts.get("baja", 0))
+        medium_col.metric("Media", counts.get("media", 0))
+        high_col.metric("Alta", counts.get("alta", 0))
+
+        st.dataframe(filtered_rows, use_container_width=True, hide_index=True)
+    else:
+        st.info("Pulsa el boton para descargar mediciones reales de Trafikoa.")
 
 with tab_rag:
     st.subheader("Busqueda RAG basica")
