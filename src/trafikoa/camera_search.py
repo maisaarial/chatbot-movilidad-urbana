@@ -16,12 +16,15 @@ def search_cameras(
     carretera: str | None = None,
     provincia: str | None = None,
     limit: int = 10,
+    only_with_image: bool = False,
 ) -> list[dict[str, Any]]:
     cameras = _load_cameras(settings.processed_data_dir / "cameras.csv")
     limit = max(1, min(limit, 100))
 
     scored_results = []
     for row_number, camera in enumerate(cameras):
+        if only_with_image and not _has_image(camera):
+            continue
         score = _score_camera(
             camera=camera,
             q=q,
@@ -62,10 +65,26 @@ def camera_to_response(camera: dict[str, Any]) -> dict[str, Any]:
         "provincia": _clean(camera.get("provincia")),
         "latitude": latitude,
         "longitude": longitude,
+        "source_id": _clean(camera.get("source_id")),
+        "kilometer": _clean(camera.get("kilometer")),
+        "raw_latitude": _clean(camera.get("raw_latitude")),
+        "raw_longitude": _clean(camera.get("raw_longitude")),
         "image_url": _clean(camera.get("image_url")),
+        "stream_url": _clean(camera.get("stream_url")),
         "source_url": _clean(camera.get("source_url")),
         "maps_url": maps_url,
     }
+
+
+def get_camera_by_id(camera_id: str) -> dict[str, Any] | None:
+    normalized_camera_id = normalize_text(camera_id)
+    if not normalized_camera_id:
+        return None
+
+    for camera in _load_cameras(settings.processed_data_dir / "cameras.csv"):
+        if normalize_text(camera.get("id")) == normalized_camera_id:
+            return camera_to_response(camera)
+    return None
 
 
 def _load_cameras(path: Path) -> list[dict[str, str]]:
@@ -120,7 +139,17 @@ def _score_camera(
     if q_score is None:
         return None
     score += q_score
+    score += _availability_score(camera)
 
+    return score
+
+
+def _availability_score(camera: dict[str, Any]) -> int:
+    score = 0
+    if _has_image(camera):
+        score += 120
+    if _has_coordinates(camera):
+        score += 40
     return score
 
 
@@ -200,6 +229,17 @@ def _maps_url(latitude: float | None, longitude: float | None) -> str:
     if latitude is None or longitude is None:
         return ""
     return f"https://www.google.com/maps?q={latitude},{longitude}"
+
+
+def _has_image(camera: dict[str, Any]) -> bool:
+    return bool(_clean(camera.get("image_url")))
+
+
+def _has_coordinates(camera: dict[str, Any]) -> bool:
+    return (
+        _to_float(camera.get("latitude")) is not None
+        and _to_float(camera.get("longitude")) is not None
+    )
 
 
 def _clean(value: Any) -> str:

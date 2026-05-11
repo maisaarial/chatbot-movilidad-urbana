@@ -10,6 +10,7 @@ from src.trafikoa.camera_search import normalize_text, search_cameras
 
 NO_EVIDENCE_MESSAGE = "No encontré información suficiente en las fuentes disponibles."
 NO_CAMERA_MESSAGE = "No encontré cámaras para ese lugar o carretera en las fuentes disponibles."
+
 CAMERA_ROAD_PATTERN = re.compile(r"\b(?:a|ap|bi|gi|n)-\s*\d+[a-z]?\b", re.IGNORECASE)
 CAMERA_INTENT_TERMS = {
     "camara",
@@ -108,148 +109,6 @@ def answer_question(question: str, k: int | None = None) -> dict[str, Any]:
     }
 
 
-def _build_context(results: list[dict[str, Any]]) -> str:
-    blocks = []
-    for index, result in enumerate(results, start=1):
-        metadata = result.get("metadata", {})
-        metadata_json = json.dumps(metadata, ensure_ascii=False, sort_keys=True)
-        blocks.append(
-            f"[Fuente {index}]\n"
-            f"Tipo de documento: {_field(metadata, 'document_type')}\n"
-            f"Metadata completa: {metadata_json}\n"
-            f"Texto recuperado: {result.get('text', '')}\n"
-        )
-    return "\n".join(blocks)
-
-
-def _select_structured_results(
-    question: str,
-    results: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    if not _has_strong_evidence(results):
-        return []
-
-    preferred_type = _preferred_document_type(question)
-    if preferred_type:
-        filtered_results = [
-            result
-            for result in results
-            if result.get("metadata", {}).get("document_type") == preferred_type
-        ]
-        if filtered_results:
-            return filtered_results
-
-    structured_types = {"incidencia", "congestion", "camara"}
-    filtered_results = [
-        result
-        for result in results
-        if result.get("metadata", {}).get("document_type") in structured_types
-    ]
-    return filtered_results
-
-
-def _has_strong_evidence(results: list[dict[str, Any]]) -> bool:
-    for result in results:
-        distance = result.get("distance")
-        score = result.get("score")
-        if distance == 0 or distance == 0.0:
-            return True
-        if score is not None and score >= 0.65:
-            return True
-    return False
-
-
-def _preferred_document_type(question: str) -> str | None:
-    normalized_question = _normalize(question)
-    if any(term in normalized_question for term in ["camara", "camaras", "imagen"]):
-        return "camara"
-    if any(term in normalized_question for term in ["congestion", "retencion", "vehiculo", "vehiculos"]):
-        return "congestion"
-    if any(term in normalized_question for term in ["incidencia", "incidencias", "accidente", "averia", "obras"]):
-        return "incidencia"
-    return None
-
-
-def _build_structured_answer(results: list[dict[str, Any]]) -> str:
-    document_type = results[0].get("metadata", {}).get("document_type")
-    if document_type == "incidencia":
-        intro = "Sí. Según las fuentes recuperadas, se encontraron estas incidencias:"
-        lines = [intro]
-        for index, result in enumerate(results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Tipo: {_field(metadata, 'tipo')}",
-                    f"   Carretera: {_field(metadata, 'carretera')}",
-                    f"   Causa: {_field(metadata, 'causa')}",
-                    f"   Sentido: {_field(metadata, 'sentido')}",
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-                ]
-            )
-        return "\n".join(lines)
-
-    if document_type == "congestion":
-        intro = "Sí. Según las fuentes recuperadas, se encontraron estos registros de congestión:"
-        lines = [intro]
-        for index, result in enumerate(results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Nivel: {_field(metadata, 'congestion')}",
-                    f"   Carretera o medidor: {_field(metadata, 'carretera')}",
-                    (
-                        "   Valor de tráfico: "
-                        f"{_field(metadata, 'valor_trafico')} {_field(metadata, 'unidad')}"
-                    ),
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-                ]
-            )
-        return "\n".join(lines)
-
-    if document_type == "camara":
-        intro = "Sí. Según las fuentes recuperadas, se encontraron estas cámaras:"
-        lines = [intro]
-        for index, result in enumerate(results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Nombre: {_field(metadata, 'nombre')}",
-                    f"   Carretera: {_field(metadata, 'carretera')}",
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Image URL: {_field(metadata, 'image_url')}",
-                    f"   Source URL: {_field(metadata, 'source_url')}",
-                ]
-            )
-        return "\n".join(lines)
-
-    lines = ["Sí. Según las fuentes recuperadas, se encontraron estos elementos:"]
-    for index, result in enumerate(results, start=1):
-        metadata = result.get("metadata", {})
-        lines.extend(
-            [
-                f"{index}. Tipo: {_field(metadata, 'tipo')}",
-                f"   Carretera: {_field(metadata, 'carretera')}",
-                (
-                    "   Municipio/provincia: "
-                    f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                ),
-                f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-            ]
-        )
-    return "\n".join(lines)
-
-
 def _answer_camera_question(question: str) -> dict[str, Any] | None:
     if not _is_camera_intent(question):
         return None
@@ -261,13 +120,25 @@ def _answer_camera_question(question: str) -> dict[str, Any] | None:
         carretera=filters.get("carretera"),
         provincia=filters.get("provincia"),
         limit=10,
+        only_with_image=True,
     )
+    only_without_image = False
+    if not cameras:
+        cameras = search_cameras(
+            q=filters.get("q"),
+            municipio=filters.get("municipio"),
+            carretera=filters.get("carretera"),
+            provincia=filters.get("provincia"),
+            limit=10,
+            only_with_image=False,
+        )
+        only_without_image = bool(cameras)
 
     if not cameras:
         return {"answer": NO_CAMERA_MESSAGE, "sources": []}
 
     return {
-        "answer": _build_camera_answer(cameras),
+        "answer": _build_camera_answer(cameras, only_without_image=only_without_image),
         "sources": [_camera_to_source(camera) for camera in cameras],
     }
 
@@ -330,8 +201,15 @@ def _extract_camera_free_text(normalized_question: str) -> str | None:
     return " ".join(tokens)
 
 
-def _build_camera_answer(cameras: list[dict[str, Any]]) -> str:
+def _build_camera_answer(
+    cameras: list[dict[str, Any]],
+    only_without_image: bool = False,
+) -> str:
     lines = ["Sí. Encontré estas cámaras:"]
+    if only_without_image:
+        lines.append(
+            "Las cámaras encontradas existen en la API, pero no tienen imagen disponible."
+        )
     for index, camera in enumerate(cameras, start=1):
         image_url = camera.get("image_url") or "no hay imagen disponible"
         maps_url = camera.get("maps_url") or "no disponible"
@@ -368,10 +246,142 @@ def _camera_to_source(camera: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _value_or_unavailable(value: Any) -> str:
-    if value is None or str(value).strip() == "":
-        return "no disponible"
-    return str(value)
+def _build_context(results: list[dict[str, Any]]) -> str:
+    blocks = []
+    for index, result in enumerate(results, start=1):
+        metadata = result.get("metadata", {})
+        metadata_json = json.dumps(metadata, ensure_ascii=False, sort_keys=True)
+        blocks.append(
+            f"[Fuente {index}]\n"
+            f"Tipo de documento: {_field(metadata, 'document_type')}\n"
+            f"Metadata completa: {metadata_json}\n"
+            f"Texto recuperado: {result.get('text', '')}\n"
+        )
+    return "\n".join(blocks)
+
+
+def _select_structured_results(
+    question: str,
+    results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not _has_strong_evidence(results):
+        return []
+
+    preferred_type = _preferred_document_type(question)
+    if preferred_type:
+        filtered_results = [
+            result
+            for result in results
+            if result.get("metadata", {}).get("document_type") == preferred_type
+        ]
+        if filtered_results:
+            return filtered_results
+
+    structured_types = {"incidencia", "congestion", "camara"}
+    return [
+        result
+        for result in results
+        if result.get("metadata", {}).get("document_type") in structured_types
+    ]
+
+
+def _has_strong_evidence(results: list[dict[str, Any]]) -> bool:
+    for result in results:
+        distance = result.get("distance")
+        score = result.get("score")
+        if distance == 0 or distance == 0.0:
+            return True
+        if score is not None and score >= 0.65:
+            return True
+    return False
+
+
+def _preferred_document_type(question: str) -> str | None:
+    normalized_question = _normalize(question)
+    if any(term in normalized_question for term in ["camara", "camaras", "imagen"]):
+        return "camara"
+    if any(term in normalized_question for term in ["congestion", "retencion", "vehiculo", "vehiculos"]):
+        return "congestion"
+    if any(term in normalized_question for term in ["incidencia", "incidencias", "accidente", "averia", "obras"]):
+        return "incidencia"
+    return None
+
+
+def _build_structured_answer(results: list[dict[str, Any]]) -> str:
+    document_type = results[0].get("metadata", {}).get("document_type")
+    if document_type == "incidencia":
+        lines = ["Sí. Según las fuentes recuperadas, se encontraron estas incidencias:"]
+        for index, result in enumerate(results, start=1):
+            metadata = result.get("metadata", {})
+            lines.extend(
+                [
+                    f"{index}. Tipo: {_field(metadata, 'tipo')}",
+                    f"   Carretera: {_field(metadata, 'carretera')}",
+                    f"   Causa: {_field(metadata, 'causa')}",
+                    f"   Sentido: {_field(metadata, 'sentido')}",
+                    (
+                        "   Municipio/provincia: "
+                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+                    ),
+                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+                ]
+            )
+        return "\n".join(lines)
+
+    if document_type == "congestion":
+        lines = ["Sí. Según las fuentes recuperadas, se encontraron estos registros de congestión:"]
+        for index, result in enumerate(results, start=1):
+            metadata = result.get("metadata", {})
+            lines.extend(
+                [
+                    f"{index}. Nivel: {_field(metadata, 'congestion')}",
+                    f"   Carretera o medidor: {_field(metadata, 'carretera')}",
+                    (
+                        "   Valor de tráfico: "
+                        f"{_field(metadata, 'valor_trafico')} {_field(metadata, 'unidad')}"
+                    ),
+                    (
+                        "   Municipio/provincia: "
+                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+                    ),
+                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+                ]
+            )
+        return "\n".join(lines)
+
+    if document_type == "camara":
+        lines = ["Sí. Según las fuentes recuperadas, se encontraron estas cámaras:"]
+        for index, result in enumerate(results, start=1):
+            metadata = result.get("metadata", {})
+            lines.extend(
+                [
+                    f"{index}. Nombre: {_field(metadata, 'nombre')}",
+                    f"   Carretera: {_field(metadata, 'carretera')}",
+                    (
+                        "   Municipio/provincia: "
+                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+                    ),
+                    f"   Image URL: {_field(metadata, 'image_url')}",
+                    f"   Source URL: {_field(metadata, 'source_url')}",
+                ]
+            )
+        return "\n".join(lines)
+
+    lines = ["Sí. Según las fuentes recuperadas, se encontraron estos elementos:"]
+    for index, result in enumerate(results, start=1):
+        metadata = result.get("metadata", {})
+        lines.extend(
+            [
+                f"{index}. Tipo: {_field(metadata, 'tipo')}",
+                f"   Carretera: {_field(metadata, 'carretera')}",
+                (
+                    "   Municipio/provincia: "
+                    f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+                ),
+                f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+            ]
+        )
+    return "\n".join(lines)
 
 
 def _build_prompt(question: str, context: str) -> str:
@@ -393,7 +403,10 @@ def _build_prompt(question: str, context: str) -> str:
 
 
 def _field(metadata: dict[str, Any], key: str) -> str:
-    value = metadata.get(key)
+    return _value_or_unavailable(metadata.get(key))
+
+
+def _value_or_unavailable(value: Any) -> str:
     if value is None or str(value).strip() == "":
         return "no disponible"
     return str(value)

@@ -161,6 +161,7 @@ Motivo:
 - Las camaras tienen campos exactos como `image_url`, `latitude`, `longitude` y `maps_url`.
 - El RAG semantico puede recuperar texto relevante, pero no garantiza preservar URLs y coordenadas con precision.
 - La busqueda estructurada devuelve datos reales del CSV, listos para mostrar imagenes y enlaces.
+- Para preguntas de camaras, el chatbot consulta primero con `only_with_image=true`; si no hay resultados con imagen, busca de nuevo sin ese filtro e indica que la camara existe pero no tiene imagen disponible en la API.
 
 Consultas detectadas como camaras:
 

@@ -271,50 +271,83 @@ Estado: Paso.
 
 ## Pruebas De Busqueda Estructurada De Camaras
 
+### Auditoria De Campos De Camaras
+
+Comando:
+
+```powershell
+$csv = Import-Csv data\processed\cameras.csv
+"rows=$($csv.Count)"
+"columns=$((($csv | Get-Member -MemberType NoteProperty).Name) -join ', ')"
+"with_image_url=$(@($csv | Where-Object { $_.image_url -and $_.image_url.Trim() }).Count)"
+"with_stream_url=$(@($csv | Where-Object { $_.stream_url -and $_.stream_url.Trim() }).Count)"
+"with_lat_lon=$(@($csv | Where-Object { $_.latitude -and $_.longitude }).Count)"
+```
+
+Resultado obtenido:
+
+```text
+rows=489
+columns=carretera, id, image_url, kilometer, latitude, longitude, municipio, nombre, provincia, raw_latitude, raw_longitude, source_id, source_url, stream_url
+with_image_url=390
+with_stream_url=0
+with_lat_lon=489
+```
+
+Interpretacion:
+
+La API real trae `urlImage` para 390 camaras. No se detectaron campos `imageUrl`, `cameraUrl` ni `stream_url` en el JSON crudo probado. `urlImage` se conserva como `image_url`.
+
+Estado: Paso.
+
 ### GET `/camaras/search?q=Bilbao`
 
 Comando:
 
 ```powershell
-$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao" -TimeoutSec 30
+$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao&only_with_image=true&limit=5" -TimeoutSec 30
 "count=$($r.count)"
+"all_have_image=$(@($r.items | Where-Object { -not $_.image_url }).Count -eq 0)"
 $r.items[0] | ConvertTo-Json -Depth 4
 ```
 
 Resultado obtenido:
 
 ```text
-count=10
-id=91
-nombre=CCTV 402 - Bajada de Enekuri
+count=5
+all_have_image=True
+id=95
+nombre=Cctv 406 - DOMO Enekuri
 carretera=BI-604
 municipio=Bilbao
 provincia=Bizkaia
-image_url=
-maps_url=https://www.google.com/maps?q=43.27968,-2.95637502
+image_url=http://www.bizkaimove.com/camaras/cam51.jpg
+maps_url=https://www.google.com/maps?q=43.29239403,-2.95937195
 ```
 
 Estado: Paso.
 
-### GET `/camaras/search?carretera=A-8`
+### GET `/camaras/search?carretera=BI-637&only_with_image=true`
 
 Comando:
 
 ```powershell
-$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=A-8" -TimeoutSec 30
+$r = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=BI-637&only_with_image=true&limit=5" -TimeoutSec 30
 "count=$($r.count)"
+"all_have_image=$(@($r.items | Where-Object { -not $_.image_url }).Count -eq 0)"
 $r.items[0] | ConvertTo-Json -Depth 4
 ```
 
 Resultado obtenido:
 
 ```text
-count=10
-id=1
-nombre=Iurreta
-carretera=A-8
-image_url=https://www.trafikoa.eus/static/files/tr/camaras/819.jpg
-maps_url=https://www.google.com/maps?q=43.18725,-2.673754
+count=5
+all_have_image=True
+id=77
+nombre=CCTV 300 - Camara DOMO nudo Kukularra
+carretera=BI-637
+image_url=http://www.bizkaimove.com/camaras/cam1.jpg
+maps_url=https://www.google.com/maps?q=43.30481703,-2.96080601
 ```
 
 Estado: Paso.
@@ -334,12 +367,36 @@ Resultado obtenido:
 
 ```text
 Si. Encontre estas camaras:
-1. Nombre: CCTV 402 - Bajada de Enekuri
+1. Nombre: Cctv 406 - DOMO Enekuri
    Carretera: BI-604
    Municipio/provincia: Bilbao / Bizkaia
-   Imagen: no hay imagen disponible
-   Mapa: https://www.google.com/maps?q=43.27968,-2.95637502
+   Imagen: http://www.bizkaimove.com/camaras/cam51.jpg
+   Mapa: https://www.google.com/maps?q=43.29239403,-2.95937195
 sources=10
+```
+
+Estado: Paso.
+
+### Camara Existente Sin Imagen
+
+Comando:
+
+```powershell
+$body = @{ question = "Hay camara CCTV 232?" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json; charset=utf-8" -TimeoutSec 240
+$r.answer
+```
+
+Resultado obtenido:
+
+```text
+Si. Encontre estas camaras:
+Las camaras encontradas existen en la API, pero no tienen imagen disponible.
+1. Nombre: CCTV 232 - Camara DOMO 232
+   Carretera: N - 637
+   Municipio/provincia: Cruces / Bizkaia
+   Imagen: no hay imagen disponible
+   Mapa: https://www.google.com/maps?q=43.28936698,-2.90569902
 ```
 
 Estado: Paso.
@@ -386,6 +443,27 @@ Content-Type: image/jpeg
 
 Estado: Paso.
 
+### Detalle De Camara Por ID
+
+Comando:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/77" -TimeoutSec 30 | Select-Object id,nombre,image_url,maps_url,source_id,kilometer | ConvertTo-Json
+```
+
+Resultado obtenido:
+
+```text
+id=77
+nombre=CCTV 300 - Camara DOMO nudo Kukularra
+image_url=http://www.bizkaimove.com/camaras/cam1.jpg
+maps_url=https://www.google.com/maps?q=43.30481703,-2.96080601
+source_id=2
+kilometer=008+500
+```
+
+Estado: Paso.
+
 ### Frontend De Camaras
 
 Comandos:
@@ -399,7 +477,7 @@ Resultado obtenido:
 
 ```text
 HTTP/1.1 200 OK
-El frontend contiene buscador de camaras, renderizado con st.image, link de imagen original y link a Google Maps.
+El frontend contiene buscador de camaras, checkbox "Mostrar solo camaras con imagen", renderizado con st.image, link de imagen original, source_url y link a Google Maps.
 ```
 
 Estado: Paso.

@@ -10,7 +10,7 @@ from src.rag.index_manager import get_index_status, refresh_index, refresh_index
 from src.rag.ollama_client import OllamaError
 from src.rag.vector_store import VectorStore
 from src.trafikoa.cameras import get_cameras
-from src.trafikoa.camera_search import search_cameras
+from src.trafikoa.camera_search import get_camera_by_id, search_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
 from src.trafikoa.congestion import get_congestion_records
 from src.trafikoa.incidents import get_current_incidents
@@ -78,6 +78,10 @@ def camaras_search(
     carretera: str | None = Query(None, description="Carretera de la camara."),
     provincia: str | None = Query(None, description="Provincia de la camara."),
     limit: int = Query(10, ge=1, le=100, description="Numero maximo de resultados."),
+    only_with_image: bool = Query(
+        False,
+        description="Si es true, devuelve solo camaras con image_url.",
+    ),
 ) -> dict[str, Any]:
     try:
         items = search_cameras(
@@ -86,6 +90,7 @@ def camaras_search(
             carretera=carretera,
             provincia=provincia,
             limit=limit,
+            only_with_image=only_with_image,
         )
     except Exception as exc:
         raise HTTPException(
@@ -93,6 +98,14 @@ def camaras_search(
             detail="Error interno buscando camaras procesadas.",
         ) from exc
     return {"count": len(items), "items": items}
+
+
+@app.get("/camaras/{camera_id}")
+def camara_detail(camera_id: str) -> dict[str, Any]:
+    camera = get_camera_by_id(camera_id)
+    if camera is None:
+        raise HTTPException(status_code=404, detail="Camara no encontrada.")
+    return camera
 
 
 @app.get("/congestion")

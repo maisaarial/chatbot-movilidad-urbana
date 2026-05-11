@@ -156,6 +156,7 @@ http://127.0.0.1:8501
 | `GET` | `/incidencias` | Devuelve incidencias reales normalizadas. |
 | `GET` | `/camaras` | Devuelve camaras reales normalizadas. |
 | `GET` | `/camaras/search` | Busca camaras por texto libre, carretera, municipio o provincia. |
+| `GET` | `/camaras/{camera_id}` | Devuelve todos los campos normalizados de una camara. |
 | `GET` | `/incidents` | Alias de `/incidencias`. |
 | `GET` | `/cameras` | Alias de `/camaras`. |
 | `GET` | `/congestion` | Descarga flows reales y calcula congestion. |

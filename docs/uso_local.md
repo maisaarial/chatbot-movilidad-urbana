@@ -95,10 +95,11 @@ curl.exe -s "http://127.0.0.1:8000/camaras"
 Busqueda estructurada de camaras:
 
 ```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao"
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=A-8"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?q=Bilbao&only_with_image=true"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?carretera=BI-637&only_with_image=true"
 Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?municipio=Galdakao"
 Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/search?provincia=BIZKAIA"
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/camaras/77"
 ```
 
 Congestion con datos reales:

@@ -69,14 +69,31 @@ La respuesta incluye campos como:
 |---|---|
 | `cameraId` | `id` |
 | `cameraName` | `nombre` |
+| `sourceId` | `source_id` |
 | `road` | `carretera` |
+| `kilometer` | `kilometer` |
 | `address` o `cityTown` | `municipio` |
 | `sourceId` | `provincia` aproximada por fuente cuando no viene provincia |
 | `latitude` | `latitude` |
 | `longitude` | `longitude` |
+| `latitude` original | `raw_latitude` |
+| `longitude` original | `raw_longitude` |
 | `urlImage` | `image_url` |
+| Campo de stream si existiera | `stream_url` |
 
 Algunas camaras tienen coordenadas en grados decimales y otras en UTM. El modulo intenta normalizar coordenadas UTM a WGS84 cuando detecta valores fuera del rango normal de latitud/longitud.
+
+En la auditoria local se detecto:
+
+```text
+total camaras=489
+con urlImage=390
+con imageUrl=0
+con cameraUrl=0
+con stream_url=0
+```
+
+Por tanto, el campo real de imagen disponible en la API probada es `urlImage`, que se normaliza como `image_url`. No se inventan URLs alternativas.
 
 Archivos generados:
 
@@ -111,6 +128,7 @@ La busqueda es tolerante a mayusculas, minusculas y tildes. Puede filtrar por:
 | `carretera` | `carretera` |
 | `provincia` | `provincia` |
 | `limit` | Numero maximo de resultados |
+| `only_with_image` | Si es `true`, filtra camaras sin `image_url` |
 
 Endpoint local:
 
@@ -122,8 +140,9 @@ Ejemplos:
 
 ```powershell
 Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?q=Bilbao"
-Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?carretera=A-8"
+Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?carretera=BI-637&only_with_image=true"
 Invoke-RestMethod "http://127.0.0.1:8000/camaras/search?provincia=BIZKAIA"
+Invoke-RestMethod "http://127.0.0.1:8000/camaras/77"
 ```
 
 Cada camara incluye `maps_url` calculado a partir de `latitude` y `longitude` cuando ambos datos existen. No se inventan camaras ni coordenadas.
@@ -191,7 +210,7 @@ data/processed/congestion.csv
 | Algunas fuentes devuelven `speedAvg`, otras no. | La primera version usa `totalVehicles`. |
 | `levelOfService` no siempre aparece en cada flow. | No se puede depender de ese campo para todos los registros. |
 | Algunos medidores no traen nombre de carretera. | Se usa un identificador real `medidor:<codigo>` para no inventar datos. |
-| Algunas camaras no tienen `image_url`. | El frontend solo permite visualizar camaras que si tienen imagen. |
+| Algunas camaras no tienen `image_url`. | El buscador prioriza camaras con imagen y permite `only_with_image=true`; si una camara existe sin imagen, se muestra el resto de campos reales. |
 | Algunas coordenadas de camaras vienen en UTM. | Se normalizan cuando se detectan. |
 
 No se generan datos inventados. Cuando falta informacion descriptiva, se conserva el dato real disponible.

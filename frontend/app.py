@@ -97,9 +97,22 @@ def _maps_url_from_item(item: dict) -> str:
     return f"https://www.google.com/maps?q={latitude},{longitude}"
 
 
+def _sort_cameras_for_display(cameras: list[dict]) -> list[dict]:
+    return sorted(
+        cameras,
+        key=lambda camera: (
+            0 if camera.get("image_url") else 1,
+            0 if _maps_url_from_item(camera) else 1,
+            str(camera.get("carretera") or ""),
+            str(camera.get("nombre") or ""),
+        ),
+    )
+
+
 def _display_camera_results(cameras: list[dict]) -> None:
-    st.dataframe(cameras, use_container_width=True, hide_index=True)
-    for camera in cameras:
+    sorted_cameras = _sort_cameras_for_display(cameras)
+    st.dataframe(sorted_cameras, use_container_width=True, hide_index=True)
+    for camera in sorted_cameras:
         title = " | ".join(
             str(value)
             for value in [
@@ -118,12 +131,17 @@ def _display_camera_results(cameras: list[dict]) -> None:
                         "carretera": camera.get("carretera", ""),
                         "municipio": camera.get("municipio", ""),
                         "provincia": camera.get("provincia", ""),
+                        "image_url": camera.get("image_url", ""),
+                        "source_url": camera.get("source_url", ""),
                     }
                 ]
             )
             image_url = camera.get("image_url")
             if image_url:
-                st.image(image_url, use_container_width=True)
+                try:
+                    st.image(image_url, use_container_width=True)
+                except Exception as exc:
+                    st.warning(f"No se pudo renderizar la imagen: {exc}")
                 st.markdown(f"[Ver imagen original]({image_url})")
             else:
                 st.info("No hay imagen disponible.")
@@ -204,6 +222,11 @@ with tab_cameras:
             value=10,
             key="camera_search_limit",
         )
+    camera_only_with_image = st.checkbox(
+        "Mostrar solo camaras con imagen",
+        value=True,
+        key="camera_search_only_with_image",
+    )
 
     if st.button("Buscar camaras", use_container_width=True):
         params = {
@@ -212,8 +235,13 @@ with tab_cameras:
             "carretera": camera_road.strip() or None,
             "provincia": camera_province.strip() or None,
             "limit": camera_limit,
+            "only_with_image": camera_only_with_image,
         }
-        params = {key: value for key, value in params.items() if value}
+        params = {
+            key: value
+            for key, value in params.items()
+            if value is not None and value != ""
+        }
         try:
             payload = get_json("/camaras/search", params=params)
             st.session_state["camera_search_results"] = payload["items"]
@@ -227,6 +255,7 @@ with tab_cameras:
         _display_camera_results(camera_search_results)
 
     if cameras:
+        cameras = _sort_cameras_for_display(cameras)
         st.dataframe(cameras, use_container_width=True, hide_index=True)
 
         cameras_with_image = [camera for camera in cameras if camera.get("image_url")]
@@ -334,7 +363,10 @@ with tab_chatbot:
                 st.write(source.get("text", ""))
                 image_url = metadata.get("image_url")
                 if image_url:
-                    st.image(image_url, use_container_width=True)
+                    try:
+                        st.image(image_url, use_container_width=True)
+                    except Exception as exc:
+                        st.warning(f"No se pudo renderizar la imagen: {exc}")
                     st.markdown(f"[Ver imagen original]({image_url})")
                 elif metadata.get("document_type") == "camara":
                     st.info("No hay imagen disponible.")

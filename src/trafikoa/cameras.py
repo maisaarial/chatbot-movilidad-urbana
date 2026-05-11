@@ -18,13 +18,18 @@ PROVINCE_BY_SOURCE = {
 
 CAMERA_COLUMNS = [
     "id",
+    "source_id",
     "nombre",
     "carretera",
+    "kilometer",
     "municipio",
     "provincia",
     "latitude",
     "longitude",
+    "raw_latitude",
+    "raw_longitude",
     "image_url",
+    "stream_url",
     "source_url",
 ]
 
@@ -70,21 +75,39 @@ def _normalise_items(payload: Any) -> list[dict[str, Any]]:
 
 def _normalise_camera(item: dict[str, Any], source_url: str) -> dict[str, Any]:
     source_id = _clean_text(item.get("sourceId"))
+    raw_latitude = _clean_text(item.get("latitude"))
+    raw_longitude = _clean_text(item.get("longitude"))
     latitude, longitude = _normalise_coordinates(
         item.get("latitude"),
         item.get("longitude"),
     )
+    image_url = _first_clean_text(
+        item.get("urlImage"),
+        item.get("imageUrl"),
+        item.get("image"),
+        item.get("cameraUrl"),
+    )
+    stream_url = _first_clean_text(
+        item.get("streamUrl"),
+        item.get("stream_url"),
+        item.get("urlStream"),
+    )
 
     return {
         "id": _clean_text(item.get("cameraId") or item.get("id")),
+        "source_id": source_id,
         "nombre": _clean_text(item.get("cameraName") or item.get("name")),
         "carretera": _clean_text(item.get("road")),
+        "kilometer": _clean_text(item.get("kilometer")),
         "municipio": _clean_text(item.get("cityTown") or item.get("address")),
         "provincia": _clean_text(item.get("province"))
         or PROVINCE_BY_SOURCE.get(source_id, ""),
         "latitude": latitude,
         "longitude": longitude,
-        "image_url": _clean_text(item.get("urlImage") or item.get("imageUrl")),
+        "raw_latitude": raw_latitude,
+        "raw_longitude": raw_longitude,
+        "image_url": image_url,
+        "stream_url": stream_url,
         "source_url": source_url,
     }
 
@@ -203,6 +226,14 @@ def _clean_text(value: Any) -> str:
     if value is None:
         return ""
     return unescape(str(value)).strip()
+
+
+def _first_clean_text(*values: Any) -> str:
+    for value in values:
+        clean_value = _clean_text(value)
+        if clean_value:
+            return clean_value
+    return ""
 
 
 def _to_float(value: Any) -> float | None:
