@@ -40,11 +40,13 @@ Si un campo no puede extraerse de forma fiable, queda vacio. No se inventan dato
 
 `src/sources/deia.py` usa como fuente principal la pagina `https://www.deia.eus/servicios/trafico/`. Esa pagina embebe Bizkaimove mediante un iframe hacia `https://www.bizkaimove.eus/bm/inicio.html`; la informacion avanzada se encuentra en `https://www.bizkaimove.eus/bm/informacion.html`. El conector extrae incidencias destacadas si existen, obras, cortes de carril, pasos alternativos, carretera, punto kilometrico, sentido, municipio/zona y enlace PDF de mas informacion cuando esta disponible. El RSS oficial de trafico queda solo como fallback si la pagina interna no devuelve elementos.
 
-`src/sources/bluesky.py` usa la API XRPC de Bluesky. Busca posts cortos con terminos como `trafico`, `A-8`, `AP-8`, `Bilbao`, `Bizkaia`, `Euskadi`, `retenciones`, `corte` o `carretera`. Si el endpoint exige autenticacion, no falla el corpus: guarda `data/raw/bluesky_raw.json` con `status=auth_required`. Puede activarse con `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`.
+`src/sources/bluesky.py` usa la API XRPC de Bluesky. Con `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD` configurados en `.env`, el conector inicia sesion y consulta `app.bsky.feed.getTimeline` para leer el timeline de cuentas seguidas, limitado inicialmente a los ultimos 100-150 posts. Esto prioriza cuentas seleccionadas manualmente como relevantes para movilidad en Euskadi y reduce el ruido de la busqueda global. La busqueda `app.bsky.feed.searchPosts` queda solo como fallback opcional si no se puede leer el timeline.
 
 ## Institucional, Medio Y Red Social
 
 Las fuentes institucionales tienden a ser mas estables y formales, con menos ruido y mayor trazabilidad. DEIA - Bizkaimove aporta informacion operativa de trafico publicada en una web de servicio: eventos breves, punto kilometrico, carretera, sentido y PDF asociado cuando existe. Bluesky representa texto informal: abreviaturas, mensajes breves, errores, duplicados, subjetividad y variabilidad linguistica.
+
+El filtro de Bluesky acepta terminos en espanol y euskera. Incluye senales como `trafico`, `movilidad`, `accidente`, `retenciones`, `corte`, `obras`, `carril`, `A-8`, `AP-8`, `BI-637`, `N-634`, y tambien `trafikoa`, `zirkulazioa`, `istripua`, `auto-ilarak`, `errepidea`, `mozketa`, `lanak`, `obrak`, `garraioa`, `bidea` o `errei`. No se traduce el texto: se conserva el post original.
 
 Esa variabilidad es util para PLN porque permite evaluar limpieza, normalizacion, filtrado semantico, deduplicacion y robustez frente a datos no estructurados. Tambien obliga a documentar calidad y procedencia, no solo cantidad de registros.
 
@@ -63,13 +65,13 @@ Esa variabilidad es util para PLN porque permite evaluar limpieza, normalizacion
 .venv\Scripts\python scripts\build_corpus.py
 ```
 
-Resultado de referencia obtenido el 12/05/2026:
+Resultado de referencia obtenido el 12/05/2026 con credenciales Bluesky configuradas:
 
 ```text
-Corpus multifuente construido: total=32, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24}, errors=[], processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=34, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
-En esa ejecucion DEIA - Bizkaimove devolvio 24 obras o afecciones reales. Bluesky genero `bluesky_raw.json`, pero no anadio filas al CSV porque la busqueda requiere autenticacion desde este entorno.
+En esa ejecucion DEIA - Bizkaimove devolvio 24 obras o afecciones reales. Bluesky leyo 55 posts del timeline, filtro 2 como relevantes, descarto 53 y no uso fallback global.
 
 ## Endpoints
 
@@ -89,7 +91,7 @@ curl.exe "http://127.0.0.1:8000/corpus?tipo_evento=transporte"
 
 ## Streamlit
 
-La pestana `Corpus multifuente` muestra la tabla consolidada, conteo por fuente y filtros por `source`, `municipio` y `tipo_evento`. El selector de fuente incluye `Ayuntamiento de Bilbao`, `DEIA - Bizkaimove` y `Bluesky`, aunque Bluesky no tenga filas si la API no permite busqueda anonima.
+La pestana `Corpus multifuente` muestra la tabla consolidada, conteo por fuente y filtros por `source`, `municipio` y `tipo_evento`. El selector de fuente incluye `Ayuntamiento de Bilbao`, `DEIA - Bizkaimove` y `Bluesky`.
 
 ## Relacion Con RAG
 
@@ -102,6 +104,8 @@ El corpus multifuente no se indexa todavia en ChromaDB. La decision separa dos f
 
 - Bilbao y DEIA - Bizkaimove dependen de HTML vivos que pueden cambiar.
 - Si `informacion.html` deja de exponer las obras/incidencias en HTML y pasa a generarlas solo por JavaScript, el conector dejara diagnostico claro en `deia_raw.json`.
-- Bluesky puede exigir autenticacion para busqueda; sin credenciales se documenta `auth_required` y el corpus sigue funcionando.
-- Los posts sociales son ruidosos: pueden contener ironia, abreviaturas, duplicados, errores ortograficos o contexto insuficiente.
+- Bluesky requiere credenciales para leer el timeline de cuentas seguidas; sin ellas se documenta `auth_required` y el corpus sigue funcionando.
+- La cobertura de Bluesky depende de las cuentas seguidas y de su actividad reciente. Si esas cuentas no publican sobre trafico o movilidad en los ultimos posts, la fuente puede devolver pocos o ningun documento.
+- La busqueda global de Bluesky queda como fallback opcional, porque devuelve resultados globales y ruidosos. El filtro exige senal de movilidad y contexto local o carretera vasca.
+- Los posts sociales pueden contener ironia, abreviaturas, duplicados, errores ortograficos o contexto insuficiente.
 - La clasificacion `tipo_evento` es una regla inicial por palabras clave, no un modelo supervisado.

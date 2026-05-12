@@ -95,7 +95,7 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Edita `.env` si necesitas ajustar la URL, rutas, umbrales o credenciales de Trafikoa.
+Edita `.env` si necesitas ajustar la URL, rutas, umbrales o credenciales. Para activar Bluesky, rellena `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD` con tu usuario y una app password.
 
 Para usar el chatbot RAG con LLM local instala Ollama y descarga el modelo:
 
@@ -142,7 +142,7 @@ data/raw/bluesky_raw.json
 data/processed/corpus_movilidad.csv
 ```
 
-Bluesky puede requerir autenticacion para busqueda. Si quieres activarlo, configura `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`; si no, el script deja `bluesky_raw.json` con un estado claro y mantiene el corpus con las demas fuentes.
+Bluesky requiere autenticacion para leer el timeline de cuentas seguidas. Si configuras `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`, el conector consulta la API XRPC autenticada, lee los ultimos posts del timeline y filtra textos en espanol/euskera con senal de movilidad y contexto Euskadi/Bizkaia/Bilbao. La busqueda global queda solo como fallback opcional. Si no hay credenciales o la API restringe la consulta, el script deja `bluesky_raw.json` con un estado claro y mantiene el corpus con las demas fuentes.
 
 ## Ejecutar Backend
 
@@ -210,7 +210,7 @@ http://127.0.0.1:8501
 | `data/processed/congestion.csv` | Registros de congestion normalizados y preparados para RAG. |
 | `data/raw/bilbao_raw.json` | Avisos originales extraidos del Ayuntamiento de Bilbao. |
 | `data/raw/deia_raw.json` | Informacion avanzada de trafico extraida desde DEIA - Bizkaimove. |
-| `data/raw/bluesky_raw.json` | Posts recuperados de Bluesky o estado de autenticacion requerido. |
+| `data/raw/bluesky_raw.json` | Posts recuperados de Bluesky, diagnostico de busqueda o estado de autenticacion requerido. |
 | `data/processed/corpus_movilidad.csv` | Corpus multifuente consolidado con esquema comun. |
 | `data/vectorstore/` | Indice ChromaDB y estado TTL reconstruidos desde los CSV procesados. |
 

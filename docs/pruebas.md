@@ -167,7 +167,7 @@ Get-Item data\processed\congestion.csv
 
 ## Pruebas Del Corpus Multifuente
 
-Estas pruebas verifican la integracion de fuentes externas en el corpus comun: Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky. Bluesky se trata como fuente social no estructurada y no bloqueante.
+Estas pruebas verifican la integracion de fuentes externas en el corpus comun: Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky. Bluesky se trata como fuente social no estructurada y no bloqueante. La fuente principal de Bluesky es el timeline de cuentas seguidas, no la busqueda global.
 
 ### Construccion Del Corpus
 
@@ -180,12 +180,12 @@ Comando:
 Resultado obtenido:
 
 ```text
-Corpus multifuente construido: total=32, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24}, errors=[], processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=34, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
 Estado: Paso.
 
-Nota: el numero de documentos puede cambiar porque Bilbao, DEIA - Bizkaimove y Bluesky son fuentes vivas. En esta ejecucion Bluesky no anadio filas porque la busqueda requiere autenticacion desde este entorno.
+Nota: el numero de documentos puede cambiar porque Bilbao, DEIA - Bizkaimove y Bluesky son fuentes vivas. En esta ejecucion Bluesky uso credenciales reales desde `.env`, leyo 55 posts del timeline de cuentas seguidas, filtro 2 como relevantes, descarto 53 y no uso fallback global.
 
 ### Archivos Generados
 
@@ -200,8 +200,8 @@ Resultado obtenido:
 ```text
 bilbao_raw.json        8781 bytes
 deia_raw.json          9187 bytes
-bluesky_raw.json        800 bytes
-corpus_movilidad.csv  31501 bytes
+bluesky_raw.json      58192 bytes
+corpus_movilidad.csv  33912 bytes
 ```
 
 Estado: Paso.
@@ -211,22 +211,25 @@ Estado: Paso.
 Comando:
 
 ```powershell
-.venv\Scripts\python -c "import csv,json,pathlib; rows=list(csv.DictReader(open('data/processed/corpus_movilidad.csv', encoding='utf-8'))); print('rows', len(rows)); print('sources', sorted({r['source'] for r in rows})); print('by_source', {s: sum(1 for r in rows if r['source']==s) for s in sorted({r['source'] for r in rows})}); raw=json.loads(pathlib.Path('data/raw/bluesky_raw.json').read_text(encoding='utf-8')); print('bluesky_status', raw.get('status')); print('bluesky_posts', raw.get('mobility_items'))"
+.venv\Scripts\python -c "import csv,json,pathlib; rows=list(csv.DictReader(open('data/processed/corpus_movilidad.csv', encoding='utf-8'))); print('rows', len(rows)); print('sources', sorted({r['source'] for r in rows})); print('by_source', {s: sum(1 for r in rows if r['source']==s) for s in sorted({r['source'] for r in rows})}); raw=json.loads(pathlib.Path('data/raw/bluesky_raw.json').read_text(encoding='utf-8')); print('bluesky_status', raw.get('status')); print('bluesky_posts', raw.get('mobility_items')); print('posts_read_timeline', raw.get('posts_read_timeline')); print('posts_discarded', raw.get('posts_discarded')); print('fallback_used', raw.get('fallback_used'))"
 ```
 
 Resultado obtenido:
 
 ```text
-rows 32
-sources ['Ayuntamiento de Bilbao', 'DEIA - Bizkaimove']
-by_source {'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24}
-bluesky_status auth_required
-bluesky_posts 0
+rows 34
+sources ['Ayuntamiento de Bilbao', 'Bluesky', 'DEIA - Bizkaimove']
+by_source {'Ayuntamiento de Bilbao': 8, 'Bluesky': 2, 'DEIA - Bizkaimove': 24}
+bluesky_status ok
+bluesky_posts 2
+posts_read_timeline 55
+posts_discarded 53
+fallback_used False
 ```
 
 Interpretacion:
 
-El corpus contiene documentos reales del Ayuntamiento de Bilbao y DEIA - Bizkaimove. DEIA extrae obras/cortes/pasos alternativos desde `https://www.bizkaimove.eus/bm/informacion.html` y registra en raw mensajes como `No existen incidencias destacadas.`. Bluesky genero `data/raw/bluesky_raw.json`, pero no aparece como `source=Bluesky` en el CSV porque la API de busqueda devolvio autenticacion requerida. El fallo queda documentado y no interrumpe la consolidacion.
+El corpus contiene documentos reales del Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky. DEIA extrae obras/cortes/pasos alternativos desde `https://www.bizkaimove.eus/bm/informacion.html` y registra en raw mensajes como `No existen incidencias destacadas.`. Bluesky recupero posts del timeline mediante API autenticada y aplica filtros en espanol/euskera para conservar mensajes con senal de movilidad y contexto local, sin traducir el texto original.
 
 Estado: Paso.
 
@@ -244,7 +247,7 @@ $r = curl.exe -s --max-time 30 "http://127.0.0.1:8000/corpus" | ConvertFrom-Json
 Resultado obtenido:
 
 ```text
-count=32
+count=34
 first_source=Ayuntamiento de Bilbao
 first_tipo=corte_trafico
 ```
@@ -260,15 +263,17 @@ $r = curl.exe -s --max-time 120 -X POST "http://127.0.0.1:8000/corpus/refresh" |
 "count=$($r.count)"
 "source_count=$($r.by_source.'Ayuntamiento de Bilbao')"
 "deia_count=$($r.by_source.'DEIA - Bizkaimove')"
+"bluesky_count=$($r.by_source.Bluesky)"
 "errors=$($r.errors.Count)"
 ```
 
 Resultado obtenido:
 
 ```text
-count=32
+count=34
 source_count=8
 deia_count=24
+bluesky_count=2
 errors=0
 ```
 

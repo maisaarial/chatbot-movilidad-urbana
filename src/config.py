@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     ollama_timeout: int = 180
     rag_top_k: int = 5
     rag_index_ttl_seconds: int = 300
+    bluesky_handle: str = ""
+    bluesky_app_password: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
