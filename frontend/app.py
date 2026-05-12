@@ -407,7 +407,7 @@ with tab_corpus:
             ]
         )
 
-        known_sources = {"Ayuntamiento de Bilbao", "DEIA", "Bluesky"}
+        known_sources = {"Ayuntamiento de Bilbao", "DEIA - Bizkaimove", "Bluesky"}
         sources = sorted(
             known_sources
             | {item.get("source", "") for item in corpus_items if item.get("source")}

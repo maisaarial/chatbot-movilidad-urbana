@@ -57,7 +57,8 @@ def deduplicate_documents(documents: list[CorpusDocument]) -> list[CorpusDocumen
     unique_documents = []
 
     for document in documents:
-        key = document.url.strip() or _hash_text(document.raw_text or document.text)
+        text_hash = _hash_text(document.raw_text or document.text)
+        key = f"{document.url.strip()}|{text_hash}" if document.url.strip() else text_hash
         if key in seen:
             continue
         seen.add(key)

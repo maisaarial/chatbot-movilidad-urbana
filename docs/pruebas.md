@@ -167,7 +167,7 @@ Get-Item data\processed\congestion.csv
 
 ## Pruebas Del Corpus Multifuente
 
-Estas pruebas verifican la integracion de fuentes externas en el corpus comun: Ayuntamiento de Bilbao, DEIA y Bluesky. Bluesky se trata como fuente social no estructurada y no bloqueante.
+Estas pruebas verifican la integracion de fuentes externas en el corpus comun: Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky. Bluesky se trata como fuente social no estructurada y no bloqueante.
 
 ### Construccion Del Corpus
 
@@ -180,12 +180,12 @@ Comando:
 Resultado obtenido:
 
 ```text
-Corpus multifuente construido: total=19, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA': 11}, errors=[], processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=32, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
 Estado: Paso.
 
-Nota: el numero de documentos puede cambiar porque Bilbao, DEIA y Bluesky son fuentes vivas. En esta ejecucion Bluesky no anadio filas porque la busqueda requiere autenticacion desde este entorno.
+Nota: el numero de documentos puede cambiar porque Bilbao, DEIA - Bizkaimove y Bluesky son fuentes vivas. En esta ejecucion Bluesky no anadio filas porque la busqueda requiere autenticacion desde este entorno.
 
 ### Archivos Generados
 
@@ -199,9 +199,9 @@ Resultado obtenido:
 
 ```text
 bilbao_raw.json        8781 bytes
-deia_raw.json        106180 bytes
+deia_raw.json          9187 bytes
 bluesky_raw.json        800 bytes
-corpus_movilidad.csv  38625 bytes
+corpus_movilidad.csv  31501 bytes
 ```
 
 Estado: Paso.
@@ -217,16 +217,16 @@ Comando:
 Resultado obtenido:
 
 ```text
-rows 19
-sources ['Ayuntamiento de Bilbao', 'DEIA']
-by_source {'Ayuntamiento de Bilbao': 8, 'DEIA': 11}
+rows 32
+sources ['Ayuntamiento de Bilbao', 'DEIA - Bizkaimove']
+by_source {'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24}
 bluesky_status auth_required
 bluesky_posts 0
 ```
 
 Interpretacion:
 
-El corpus contiene documentos reales del Ayuntamiento de Bilbao y DEIA. Bluesky genero `data/raw/bluesky_raw.json`, pero no aparece como `source=Bluesky` en el CSV porque la API de busqueda devolvio autenticacion requerida. El fallo queda documentado y no interrumpe la consolidacion.
+El corpus contiene documentos reales del Ayuntamiento de Bilbao y DEIA - Bizkaimove. DEIA extrae obras/cortes/pasos alternativos desde `https://www.bizkaimove.eus/bm/informacion.html` y registra en raw mensajes como `No existen incidencias destacadas.`. Bluesky genero `data/raw/bluesky_raw.json`, pero no aparece como `source=Bluesky` en el CSV porque la API de busqueda devolvio autenticacion requerida. El fallo queda documentado y no interrumpe la consolidacion.
 
 Estado: Paso.
 
@@ -244,7 +244,7 @@ $r = curl.exe -s --max-time 30 "http://127.0.0.1:8000/corpus" | ConvertFrom-Json
 Resultado obtenido:
 
 ```text
-count=19
+count=32
 first_source=Ayuntamiento de Bilbao
 first_tipo=corte_trafico
 ```
@@ -259,16 +259,16 @@ Comando:
 $r = curl.exe -s --max-time 120 -X POST "http://127.0.0.1:8000/corpus/refresh" | ConvertFrom-Json
 "count=$($r.count)"
 "source_count=$($r.by_source.'Ayuntamiento de Bilbao')"
-"deia_count=$($r.by_source.DEIA)"
+"deia_count=$($r.by_source.'DEIA - Bizkaimove')"
 "errors=$($r.errors.Count)"
 ```
 
 Resultado obtenido:
 
 ```text
-count=19
+count=32
 source_count=8
-deia_count=11
+deia_count=24
 errors=0
 ```
 
@@ -287,7 +287,7 @@ Resultado obtenido:
 
 ```text
 HTTP/1.1 200 OK
-El frontend contiene la pestana Corpus multifuente, el boton Actualizar corpus, filtros por source, municipio y tipo_evento, llamadas a /corpus y /corpus/refresh, y el selector incluye Ayuntamiento de Bilbao, DEIA y Bluesky.
+El frontend contiene la pestana Corpus multifuente, el boton Actualizar corpus, filtros por source, municipio y tipo_evento, llamadas a /corpus y /corpus/refresh, y el selector incluye Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky.
 ```
 
 Estado: Paso.
