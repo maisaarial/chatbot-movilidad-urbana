@@ -310,9 +310,9 @@ Comando:
 Resultado obtenido:
 
 ```text
-RAG index rebuilt: 1294 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
-Document types indexed: {'incidencia': 423, 'camara': 489, 'congestion': 350, 'corpus_multifuente': 32}
-Sources indexed: {'Gobierno Pais Vasco': 260, 'Ayuntamiento Bilbao': 475, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
+RAG index rebuilt: 1328 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+Document types indexed: {'incidencia': 307, 'camara': 489, 'congestion': 500, 'corpus_multifuente': 32}
+Sources indexed: {'Gobierno Pais Vasco': 136, 'Ayuntamiento Bilbao': 630, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
 ```
 
 Estado: Paso.
@@ -349,7 +349,7 @@ Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status" -TimeoutSe
 Resultado obtenido:
 
 ```text
-documents_indexed=1294
+documents_indexed=1328
 ttl_seconds=300
 is_stale=False
 status=ready
@@ -371,7 +371,7 @@ Resultado obtenido:
 ```text
 refreshed=True
 last_refresh_reason=manual
-documents_indexed=1294
+documents_indexed=1328
 is_stale=False
 ```
 
@@ -450,6 +450,75 @@ Resultado obtenido:
 document_type=camara
 image_url=http://www.bizkaimove.com/camaras/cam51.jpg
 ```
+
+Estado: Paso.
+
+## Pruebas De Evaluacion
+
+### Dataset Manual
+
+Archivo:
+
+```text
+data/evaluation/eval_queries.csv
+```
+
+Resultado:
+
+```text
+25 preguntas anotadas manualmente
+columnas=id, question, expected_intent, expected_entities, expected_source_type, expected_source, expected_answer_contains, notes
+```
+
+La muestra incluye incidencias Trafikoa, camaras, congestion, avisos Ayuntamiento de Bilbao, DEIA - Bizkaimove, Bluesky y preguntas sin informacion suficiente.
+
+Estado: Paso.
+
+### Evaluacion De Retrieval
+
+Comando:
+
+```powershell
+.venv\Scripts\python scripts\evaluate_retrieval.py
+```
+
+Resultado obtenido:
+
+```text
+retrieval_queries=25
+metric_applicable=23
+recall@5=0.652
+mrr@5=0.630
+output=data\evaluation\retrieval_results.csv
+```
+
+Interpretacion:
+
+El retrieval recupera la fuente o tipo esperado en 15 de 23 preguntas con metrica aplicable. Los fallos principales aparecen en consultas ambiguas o en camaras, porque el flujo final de camaras no depende solo del retrieval semantico: usa busqueda estructurada antes del RAG.
+
+Estado: Paso.
+
+### Evaluacion Del Chatbot
+
+Comando:
+
+```powershell
+.venv\Scripts\python scripts\evaluate_chatbot.py
+```
+
+Resultado obtenido:
+
+```text
+chatbot_queries=25
+completed=25
+contains_expected_rate=0.840
+expected_source_rate=0.800
+output=data\evaluation\chatbot_results.csv
+```
+
+Interpretacion:
+
+El chatbot completa todas las preguntas. La comprobacion automatica de terminos esperados pasa en 21 de 25 casos. La fuente esperada aparece en 20 de 25 casos tras corregir la metadata `source=Trafikoa` en respuestas de camaras. Quedan fallos reales en consultas de congestion ambiguas y en una pregunta social amplia sobre Bizkaia que recupera antes avisos institucionales que Bluesky.
 
 Estado: Paso.
 

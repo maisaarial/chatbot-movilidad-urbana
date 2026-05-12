@@ -52,6 +52,7 @@ src/sources/          Conectores de fuentes externas y esquema de corpus
 src/rag/              Indexacion RAG, recuperacion y cliente Ollama
 data/raw/             Respuestas originales descargadas
 data/processed/       CSV normalizados
+data/evaluation/      Muestra anotada y resultados de evaluacion
 docs/                 Documentacion tecnica del proyecto
 ```
 
@@ -74,6 +75,8 @@ docs/                 Documentacion tecnica del proyecto
 | `src/rag/ollama_client.py` | Cliente HTTP para Ollama local. |
 | `src/rag/chatbot.py` | Orquesta retrieve, prompt y respuesta del LLM local. |
 | `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
+| `scripts/evaluate_retrieval.py` | Evalua retrieval con Recall@k y MRR aproximados. |
+| `scripts/evaluate_chatbot.py` | Evalua respuestas finales y fuentes usadas. |
 | `src/sources/base.py` | Define el esquema comun del corpus multifuente y utilidades de guardado. |
 | `src/sources/bilbao.py` | Extrae avisos de movilidad del Ayuntamiento de Bilbao. |
 | `src/sources/deia.py` | Extrae informacion avanzada de trafico desde DEIA - Bizkaimove. |
@@ -143,6 +146,30 @@ data/processed/corpus_movilidad.csv
 ```
 
 Bluesky requiere autenticacion para leer el timeline de cuentas seguidas. Si configuras `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`, el conector consulta la API XRPC autenticada, lee los ultimos posts del timeline y filtra textos en espanol/euskera con senal de movilidad y contexto Euskadi/Bizkaia/Bilbao. La busqueda global queda solo como fallback opcional. Si no hay credenciales o la API restringe la consulta, el script deja `bluesky_raw.json` con un estado claro y mantiene el corpus con las demas fuentes.
+
+## Evaluar El Sistema
+
+La evaluacion usa una muestra pequena anotada manualmente en:
+
+```text
+data/evaluation/eval_queries.csv
+```
+
+Comandos:
+
+```powershell
+.venv\Scripts\python scripts\evaluate_retrieval.py
+.venv\Scripts\python scripts\evaluate_chatbot.py
+```
+
+Resultados generados:
+
+```text
+data/evaluation/retrieval_results.csv
+data/evaluation/chatbot_results.csv
+```
+
+La evaluacion no hace fine-tuning ni usa APIs pagas. Mide retrieval con Recall@k/MRR aproximados y el chatbot final con comprobaciones simples de fuentes y terminos esperados.
 
 ## Ejecutar Backend
 
@@ -221,6 +248,7 @@ http://127.0.0.1:8501
 - [Calculo de Congestion](docs/congestion.md)
 - [RAG y Ollama](docs/rag.md)
 - [Corpus Multifuente](docs/corpus_multifuente.md)
+- [Evaluacion](docs/evaluacion.md)
 - [Pruebas](docs/pruebas.md)
 - [Uso Local](docs/uso_local.md)
 

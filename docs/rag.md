@@ -127,9 +127,9 @@ Comando:
 Resultado esperado:
 
 ```text
-RAG index rebuilt: 1294 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
-Document types indexed: {'incidencia': 423, 'camara': 489, 'congestion': 350, 'corpus_multifuente': 32}
-Sources indexed: {'Gobierno Pais Vasco': 260, 'Ayuntamiento Bilbao': 475, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
+RAG index rebuilt: 1328 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+Document types indexed: {'incidencia': 307, 'camara': 489, 'congestion': 500, 'corpus_multifuente': 32}
+Sources indexed: {'Gobierno Pais Vasco': 136, 'Ayuntamiento Bilbao': 630, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
 ```
 
 El numero puede variar si se actualizan los CSV.

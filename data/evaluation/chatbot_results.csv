@@ -1,0 +1,854 @@
+id,question,expected_intent,expected_source_type,expected_source,expected_answer_contains,contains_expected,matched_terms,expected_source_found,answer,sources_used,error
+E001,Que incidencias hay en la A-8?,incidencia_search,incidencia,Gobierno Pais Vasco,A-8;Carretera;Fecha,true,A-8;Carretera;Fecha,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: A-8
+   Causa: Avería
+   Sentido: Irun
+   Municipio/provincia: Basauri / BIZKAIA
+   Fecha/hora: 2026-05-12T10:41:36
+2. Fuente: Gobierno Pais Vasco
+   Tipo: Otras incidencias
+   Carretera: A-8
+   Causa: Otros
+   Sentido: Irun
+   Municipio/provincia: Barakaldo / BIZKAIA
+   Fecha/hora: 2026-05-12T07:21:55
+3. Fuente: Gobierno Pais Vasco
+   Tipo: Otras incidencias
+   Carretera: A-8
+   Causa: Otros
+   Sentido: Irun
+   Municipio/provincia: Bilbao / BIZKAIA
+   Fecha/hora: 2026-05-12T07:23:36
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Vialidad invernal tramos
+   Carretera: A-8
+   Causa: Desconocida
+   Sentido: NO DISPONIBLE
+   Municipio/provincia: no disponible / Gipuzkoa
+   Fecha/hora: 2026-05-12T06:37:13
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Vialidad invernal tramos
+   Carretera: A-8
+   Causa: Desconocida
+   Sentido: NO DISPONIBLE
+   Municipio/provincia: no disponible / Gipuzkoa
+   Fecha/hora: 2026-05-12T06:37:13","[{""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:41:36""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Otras incidencias"", ""timestamp"": ""2026-05-12T07:21:55""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Otras incidencias"", ""timestamp"": ""2026-05-12T07:23:36""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Vialidad invernal tramos"", ""timestamp"": ""2026-05-12T06:37:13""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Vialidad invernal tramos"", ""timestamp"": ""2026-05-12T06:37:13""}]",
+E002,Hay obras en la N-1?,incidencia_search,incidencia,Gobierno Pais Vasco,N-1;Obras;Fecha,true,N-1;Obras;Fecha,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-1
+   Causa: Caída de objetos
+   Sentido: MADRID
+   Municipio/provincia: Andoain / GIPUZKOA
+   Fecha/hora: 2026-05-12T10:19:53
+2. Fuente: Gobierno Pais Vasco
+   Tipo: Obras
+   Carretera: N-1
+   Causa: Obras
+   Sentido: IRÚN
+   Municipio/provincia: Idiazabal / GIPUZKOA
+   Fecha/hora: 2026-05-12T07:41:46
+3. Fuente: Gobierno Pais Vasco
+   Tipo: Vialidad invernal tramos
+   Carretera: N-124
+   Causa: Desconocida
+   Sentido: NO DISPONIBLE
+   Municipio/provincia: no disponible / Alava-Araba
+   Fecha/hora: 2026-05-12T06:37:13
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Puertos de montaña
+   Carretera: N-1
+   Causa: Desconocida
+   Sentido: IRUN
+   Municipio/provincia: no disponible / Gipuzkoa
+   Fecha/hora: 2026-05-12T06:37:13
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Obras
+   Carretera: N-1
+   Causa: Obras
+   Sentido: IRÚN
+   Municipio/provincia: Idiazabal / GIPUZKOA
+   Fecha/hora: 2026-05-12T06:35:54","[{""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:19:53""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Obras"", ""timestamp"": ""2026-05-12T07:41:46""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Vialidad invernal tramos"", ""timestamp"": ""2026-05-12T06:37:13""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Puertos de montaña"", ""timestamp"": ""2026-05-12T06:37:13""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Obras"", ""timestamp"": ""2026-05-12T06:35:54""}]",
+E003,Hay accidentes o averias recientes?,incidencia_search,incidencia,Gobierno Pais Vasco,Tipo;Fecha,false,,false,No. No se encontraron incidentes de accidente o avería en las fuentes recuperadas.,"[{""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (ABADIÑO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T02:25""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T01:55""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T02:25""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T00:25""}]",
+E004,Incidencias en Gipuzkoa?,incidencia_search,incidencia,Gobierno Pais Vasco,Gipuzkoa;Fecha,true,Gipuzkoa;Fecha,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-1
+   Causa: Caída de objetos
+   Sentido: MADRID
+   Municipio/provincia: Andoain / GIPUZKOA
+   Fecha/hora: 2026-05-12T10:19:53
+2. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: GI-2132
+   Causa: Avería
+   Sentido: LARZABAL (por ASTIGARRAGA)
+   Municipio/provincia: Astigarraga / GIPUZKOA
+   Fecha/hora: 2026-05-12T08:36:27
+3. Fuente: Gobierno Pais Vasco
+   Tipo: Otras incidencias
+   Carretera: GI-2632
+   Causa: Otros
+   Sentido: Elorrio
+   Municipio/provincia: Olaberria / GIPUZKOA
+   Fecha/hora: 2026-05-12T07:40:54
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Obras
+   Carretera: N-1
+   Causa: Obras
+   Sentido: IRÚN
+   Municipio/provincia: Idiazabal / GIPUZKOA
+   Fecha/hora: 2026-05-12T07:41:46
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Vialidad invernal tramos
+   Carretera: AP-1
+   Causa: Desconocida
+   Sentido: NO DISPONIBLE
+   Municipio/provincia: no disponible / Gipuzkoa
+   Fecha/hora: 2026-05-12T06:37:13","[{""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:19:53""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T08:36:27""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Otras incidencias"", ""timestamp"": ""2026-05-12T07:40:54""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Obras"", ""timestamp"": ""2026-05-12T07:41:46""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Vialidad invernal tramos"", ""timestamp"": ""2026-05-12T06:37:13""}]",
+E005,Que pasa en la AP-8?,incidencia_search,incidencia,Gobierno Pais Vasco,AP-8;Carretera,true,AP-8;Carretera,false,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Trafikoa
+   Nombre: SLO_DOM_002D (ERMCME017) PK 75+100
+   Carretera: AP-8
+   Municipio/provincia: DONOSTIA / Bizkaia
+   Image URL: no disponible
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras
+2. Fuente: Trafikoa
+   Nombre: SLO_DOM_001D (18) PK 75+500
+   Carretera: AP-8
+   Municipio/provincia: DONOSTIA / Bizkaia
+   Image URL: http://www.bizkaimove.com/camaras/cam96.jpg?t=8760216
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras
+3. Fuente: Trafikoa
+   Nombre: SLO_DOM_001A(19) PK 76+100
+   Carretera: AP-8
+   Municipio/provincia: SANTANDER / Bizkaia
+   Image URL: no disponible
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras
+4. Fuente: Trafikoa
+   Nombre: ZAL_DOM_001A (E2ECME014) PK 76+800
+   Carretera: AP-8
+   Municipio/provincia: SANTANDER / Bizkaia
+   Image URL: no disponible
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras
+5. Fuente: Trafikoa
+   Nombre: ERM_DOM_002D (66) PK 77+000
+   Carretera: AP-8
+   Municipio/provincia: PEAJE / Bizkaia
+   Image URL: no disponible
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""SLO_DOM_002D (ERMCME017) PK 75+100"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""SLO_DOM_001D (18) PK 75+500"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""SLO_DOM_001A(19) PK 76+100"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""ZAL_DOM_001A (E2ECME014) PK 76+800"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""ERM_DOM_002D (66) PK 77+000"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E006,Que camaras hay en Bilbao?,camera_search,camara,Trafikoa,Camaras;Imagen;Bilbao,true,Camaras;Imagen;Bilbao,true,"Sí. Encontré estas cámaras:
+1. Nombre: Cctv 406 - DOMO Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam51.jpg
+   Mapa: https://www.google.com/maps?q=43.29239403,-2.95937195
+2. Nombre: CCTV 606
+   Carretera: BI-636
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam80.jpg
+   Mapa: https://www.google.com/maps?q=43.22130296,-3.01973805
+3. Nombre: CCTV 105 - Bilbao Oeste (Miraflores)
+   Carretera: A8
+   Municipio/provincia: Donostia / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam60.jpg
+   Mapa: https://www.google.com/maps?q=43.24334603,-2.93035298
+4. Nombre: Túnel Bernaola Exterior Entrada Lado Bilbao
+   Carretera: no disponible
+   Municipio/provincia: Túnel Bernaola Exterior Entrada Lado Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0100/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.26880603790335,-2.955219567775675
+5. Nombre: Túnel Bernaola Exterior Salida Lado Bilbao
+   Carretera: no disponible
+   Municipio/provincia: Túnel Bernaola Exterior Salida Lado Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0102/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.26958093790335,-2.956166567775675
+6. Nombre: 110 Bernaola 6 Sentido Bilbao
+   Carretera: no disponible
+   Municipio/provincia: 110 Bernaola 6 Sentido Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0110/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27389933790335,-2.955182767775675
+7. Nombre: 111 Bernaola 7 Sentido Bilbao
+   Carretera: no disponible
+   Municipio/provincia: 111 Bernaola 7 Sentido Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0111/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27306563790335,-2.955728567775675
+8. Nombre: 112 Bernaola 8 Sentido Bilbao
+   Carretera: no disponible
+   Municipio/provincia: 112 Bernaola 8 Sentido Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0112/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27230613790335,-2.956136267775675
+9. Nombre: 114 Bernaola 10 Sentido Bilbao
+   Carretera: no disponible
+   Municipio/provincia: 114 Bernaola 10 Sentido Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0114/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27006693790335,-2.956224867775675
+10. Nombre: 113 Bernaola 9 Sentido Bilbao
+   Carretera: no disponible
+   Municipio/provincia: 113 Bernaola 9 Sentido Bilbao / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0113/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27148233790335,-2.956290867775675","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Cctv 406 - DOMO Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 606"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 105 - Bilbao Oeste (Miraflores)"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Túnel Bernaola Exterior Entrada Lado Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Túnel Bernaola Exterior Salida Lado Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""110 Bernaola 6 Sentido Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""111 Bernaola 7 Sentido Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""112 Bernaola 8 Sentido Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""114 Bernaola 10 Sentido Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""113 Bernaola 9 Sentido Bilbao"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E007,Muestrame camaras en la BI-637,camera_search,camara,Trafikoa,BI-637;Imagen,true,BI-637;Imagen,true,"Sí. Encontré estas cámaras:
+1. Nombre: CCTV 300 - Cámara DOMO nudo Kukularra
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam1.jpg
+   Mapa: https://www.google.com/maps?q=43.30481703,-2.96080601
+2. Nombre: CCTV 302 - Avanzada
+   Carretera: BI-637
+   Municipio/provincia: Kukularra / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam3.jpg
+   Mapa: https://www.google.com/maps?q=43.31617998,-2.96917295
+3. Nombre: CCTV 303 - Entrada Túnel Leioa (dir. Getxo)
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam13.jpg
+   Mapa: https://www.google.com/maps?q=43.324247,-2.98414005
+4. Nombre: CCTV 312 - Rotonda Artaza
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam5.jpg
+   Mapa: https://www.google.com/maps?q=43.33319503,-3.00178298
+5. Nombre: CCTV 314 - Artea
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam41.jpg
+   Mapa: https://www.google.com/maps?q=43.34294504,-2.99439803
+6. Nombre: CCTV 316 - Báscula bombeo
+   Carretera: BI-637
+   Municipio/provincia: Kukularra / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam42.jpg
+   Mapa: https://www.google.com/maps?q=43.35667304,-3.00023903
+7. Nombre: Rotonda Romo
+   Carretera: BI-637
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/3723.jpg
+   Mapa: https://www.google.com/maps?q=43.3331,-3.001937
+8. Nombre: Bomberos Artaza
+   Carretera: BI-637
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/3724.jpg
+   Mapa: https://www.google.com/maps?q=43.33018,-2.996275
+9. Nombre: Incorporación Astrabudua
+   Carretera: BI-637
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/6010.jpg
+   Mapa: https://www.google.com/maps?q=43.3159,-2.968442
+10. Nombre: Leioa
+   Carretera: BI-637
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/6005.jpg
+   Mapa: https://www.google.com/maps?q=43.324831,-2.985478","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 300 - Cámara DOMO nudo Kukularra"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 302 - Avanzada"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 303 - Entrada Túnel Leioa (dir. Getxo)"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 312 - Rotonda Artaza"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 314 - Artea"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 316 - Báscula bombeo"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Rotonda Romo"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Bomberos Artaza"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Incorporación Astrabudua"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Leioa"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E008,Camaras con imagen en Bizkaia,camera_search,camara,Trafikoa,Imagen;Bizkaia,true,Imagen;Bizkaia,true,"Sí. Encontré estas cámaras:
+1. Nombre: CCTV 300 - Cámara DOMO nudo Kukularra
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam1.jpg
+   Mapa: https://www.google.com/maps?q=43.30481703,-2.96080601
+2. Nombre: CCTV 302 - Avanzada
+   Carretera: BI-637
+   Municipio/provincia: Kukularra / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam3.jpg
+   Mapa: https://www.google.com/maps?q=43.31617998,-2.96917295
+3. Nombre: CCTV 303 - Entrada Túnel Leioa (dir. Getxo)
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam13.jpg
+   Mapa: https://www.google.com/maps?q=43.324247,-2.98414005
+4. Nombre: CCTV 312 - Rotonda Artaza
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam5.jpg
+   Mapa: https://www.google.com/maps?q=43.33319503,-3.00178298
+5. Nombre: CCTV 314 - Artea
+   Carretera: BI-637
+   Municipio/provincia: Kurtzes / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam41.jpg
+   Mapa: https://www.google.com/maps?q=43.34294504,-2.99439803
+6. Nombre: CCTV 316 - Báscula bombeo
+   Carretera: BI-637
+   Municipio/provincia: Kukularra / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam42.jpg
+   Mapa: https://www.google.com/maps?q=43.35667304,-3.00023903
+7. Nombre: CCTV 401 - Bajada de Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Asua / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam50.jpg
+   Mapa: https://www.google.com/maps?q=43.27795,-2.95513803
+8. Nombre: Cctv 406 - DOMO Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam51.jpg
+   Mapa: https://www.google.com/maps?q=43.29239403,-2.95937195
+9. Nombre: CCTV 606
+   Carretera: BI-636
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam80.jpg
+   Mapa: https://www.google.com/maps?q=43.22130296,-3.01973805
+10. Nombre: CCTV 609
+   Carretera: BI-636
+   Municipio/provincia: Balmaseda / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam81.jpg
+   Mapa: https://www.google.com/maps?q=43.19352297,-3.04766204","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 300 - Cámara DOMO nudo Kukularra"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 302 - Avanzada"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 303 - Entrada Túnel Leioa (dir. Getxo)"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 312 - Rotonda Artaza"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 314 - Artea"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 316 - Báscula bombeo"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 401 - Bajada de Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Cctv 406 - DOMO Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 606"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 609"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E009,Hay camara en Enekuri?,camera_search,camara,Trafikoa,Enekuri;Imagen,true,Enekuri;Imagen,true,"Sí. Encontré estas cámaras:
+1. Nombre: Enekuri
+   Carretera: BI-604
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/6001.jpg
+   Mapa: https://www.google.com/maps?q=43.28985,-2.96085
+2. Nombre: CCTV 401 - Bajada de Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Asua / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam50.jpg
+   Mapa: https://www.google.com/maps?q=43.27795,-2.95513803
+3. Nombre: Cctv 406 - DOMO Enekuri
+   Carretera: BI-604
+   Municipio/provincia: Bilbao / Bizkaia
+   Imagen: http://www.bizkaimove.com/camaras/cam51.jpg
+   Mapa: https://www.google.com/maps?q=43.29239403,-2.95937195
+4. Nombre: Lehendakari Aguirre/Avda. Enekuri
+   Carretera: no disponible
+   Municipio/provincia: Lehendakari Aguirre/Avda. Enekuri / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0016/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27207213790335,-2.947412467775675
+5. Nombre: Túnel Bernaola/Avda. de Enekuri
+   Carretera: no disponible
+   Municipio/provincia: Túnel Bernaola/Avda. de Enekuri / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0104/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27798583790335,-2.9551629677756748
+6. Nombre: Bernaola/Avda.Enekuri
+   Carretera: no disponible
+   Municipio/provincia: Bernaola/Avda.Enekuri / Bizkaia
+   Imagen: https://www.bilbao.eus/camarastrafico/codec0154/snap_c1.jpg
+   Mapa: https://www.google.com/maps?q=43.27798583790335,-2.9551629677756748","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""CCTV 401 - Bajada de Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Cctv 406 - DOMO Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Lehendakari Aguirre/Avda. Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Túnel Bernaola/Avda. de Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Bernaola/Avda.Enekuri"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E010,Ver camaras en A-8,camera_search,camara,Trafikoa,A-8;Imagen,true,A-8;Imagen,true,"Sí. Encontré estas cámaras:
+1. Nombre: Iurreta
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/819.jpg
+   Mapa: https://www.google.com/maps?q=43.18725,-2.673754
+2. Nombre: Montorra
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/820.jpg
+   Mapa: https://www.google.com/maps?q=43.21167,-2.719359
+3. Nombre: Boroa 2
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/821.jpg
+   Mapa: https://www.google.com/maps?q=43.23135,-2.768933
+4. Nombre: Elgoibar 1
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/816.jpg
+   Mapa: https://www.google.com/maps?q=43.23597,-2.402644
+5. Nombre: Elgoibar 2
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/815.jpg
+   Mapa: https://www.google.com/maps?q=43.22909,-2.40303
+6. Nombre: Orio 1
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/812.jpg
+   Mapa: https://www.google.com/maps?q=43.29204,-2.067865
+7. Nombre: Orio 2
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/811.jpg
+   Mapa: https://www.google.com/maps?q=43.29223,-2.067674
+8. Nombre: Rekalde
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/830.jpg
+   Mapa: https://www.google.com/maps?q=43.24759,-2.939664
+9. Nombre: Curvas de Ansio
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/839.jpg
+   Mapa: https://www.google.com/maps?q=43.28106,-2.985413
+10. Nombre: Max Center
+   Carretera: A-8
+   Municipio/provincia: no disponible / no disponible
+   Imagen: https://www.trafikoa.eus/static/files/tr/camaras/842.jpg
+   Mapa: https://www.google.com/maps?q=43.29091,-3.009818","[{""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Iurreta"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Montorra"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Boroa 2"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Elgoibar 1"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Elgoibar 2"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Orio 1"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Orio 2"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Rekalde"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Curvas de Ansio"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Max Center"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E011,Hay congestion en Bilbao?,congestion_search,congestion,Ayuntamiento Bilbao,Bilbao;congestion,false,Bilbao,false,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-622
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zigoitia / ARABA
+   Fecha/hora: 2026-05-12T10:45:18
+2. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: AP-68
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Orozko / BIZKAIA
+   Fecha/hora: 2026-05-12T10:46:17
+3. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-622
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zigoitia / ARABA
+   Fecha/hora: 2026-05-12T10:53:48
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: AP-68
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zuia / ARABA
+   Fecha/hora: 2026-05-12T08:45:52
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Otras incidencias
+   Carretera: A-8
+   Causa: Otros
+   Sentido: Irun
+   Municipio/provincia: Bilbao / BIZKAIA
+   Fecha/hora: 2026-05-12T07:23:36","[{""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:45:18""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:46:17""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:53:48""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T08:45:52""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Otras incidencias"", ""timestamp"": ""2026-05-12T07:23:36""}]",
+E012,Nivel de congestion del medidor 248,congestion_search,congestion,Ayuntamiento Bilbao,medidor:248;Nivel,true,medidor:248;Nivel,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Ayuntamiento Bilbao
+   Nivel: baja
+   Carretera o medidor: medidor:248
+   Valor de trafico: 0.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T02:45
+2. Fuente: Ayuntamiento Bilbao
+   Nivel: media
+   Carretera o medidor: medidor:248
+   Valor de trafico: 108.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T09:55
+3. Fuente: Ayuntamiento Bilbao
+   Nivel: baja
+   Carretera o medidor: medidor:248
+   Valor de trafico: 0.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T00:55
+4. Fuente: Ayuntamiento Bilbao
+   Nivel: baja
+   Carretera o medidor: medidor:248
+   Valor de trafico: 0.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T04:25
+5. Fuente: Ayuntamiento Bilbao
+   Nivel: baja
+   Carretera o medidor: medidor:248
+   Valor de trafico: 12.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T02:35","[{""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T02:45""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T09:55""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T00:55""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T04:25""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T02:35""}]",
+E013,Que registros de trafico hay en Bilbao?,congestion_search,congestion,Ayuntamiento Bilbao,Bilbao;valor,false,Bilbao,false,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-622
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zigoitia / ARABA
+   Fecha/hora: 2026-05-12T10:45:18
+2. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: AP-68
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Orozko / BIZKAIA
+   Fecha/hora: 2026-05-12T10:46:17
+3. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-622
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zigoitia / ARABA
+   Fecha/hora: 2026-05-12T10:53:48
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: AP-68
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zuia / ARABA
+   Fecha/hora: 2026-05-12T08:45:52
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Otras incidencias
+   Carretera: A-8
+   Causa: Otros
+   Sentido: Irun
+   Municipio/provincia: Bilbao / BIZKAIA
+   Fecha/hora: 2026-05-12T07:23:36","[{""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:45:18""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:46:17""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:53:48""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T08:45:52""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Otras incidencias"", ""timestamp"": ""2026-05-12T07:23:36""}]",
+E014,Congestion alta en Bilbao?,congestion_search,congestion,Ayuntamiento Bilbao,alta;Bilbao,true,alta;Bilbao,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Fuente: Ayuntamiento Bilbao
+   Nivel: alta
+   Carretera o medidor: medidor:248
+   Valor de trafico: 171.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T09:45
+2. Fuente: Ayuntamiento Bilbao
+   Nivel: alta
+   Carretera o medidor: medidor:248
+   Valor de trafico: 176.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T09:05
+3. Fuente: Ayuntamiento Bilbao
+   Nivel: alta
+   Carretera o medidor: medidor:273
+   Valor de trafico: 725.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T09:55
+4. Fuente: Ayuntamiento Bilbao
+   Nivel: alta
+   Carretera o medidor: medidor:273
+   Valor de trafico: 870.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T10:15
+5. Fuente: Ayuntamiento Bilbao
+   Nivel: alta
+   Carretera o medidor: medidor:273
+   Valor de trafico: 851.0 vehiculos/intervalo
+   Municipio/provincia: Bilbao / Bizkaia
+   Fecha/hora: 2026-05-12T10:25","[{""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T09:45""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T09:05""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T09:55""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T10:15""}, {""source"": ""Ayuntamiento Bilbao"", ""source_type"": ""congestion"", ""title"": """", ""url"": """", ""tipo_evento"": ""congestion"", ""timestamp"": ""2026-05-12T10:25""}]",
+E015,Que cortes recientes hay en Bilbao?,bilbao_notice_search,web_institucional,Ayuntamiento de Bilbao,Ayuntamiento de Bilbao;Titulo;URL,true,Ayuntamiento de Bilbao;Titulo;URL,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+2. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+3. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+4. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: N-622
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Zigoitia / ARABA
+   Fecha/hora: 2026-05-12T10:45:18
+5. Fuente: Gobierno Pais Vasco
+   Tipo: Seguridad vial
+   Carretera: AP-68
+   Causa: Avería
+   Sentido: BILBAO
+   Municipio/provincia: Orozko / BIZKAIA
+   Fecha/hora: 2026-05-12T10:46:17","[{""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:45:18""}, {""source"": ""Gobierno Pais Vasco"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""Seguridad vial"", ""timestamp"": ""2026-05-12T10:46:17""}]",
+E016,Avisos de movilidad del Ayuntamiento de Bilbao,bilbao_notice_search,web_institucional,Ayuntamiento de Bilbao,Ayuntamiento de Bilbao;Titulo,true,Ayuntamiento de Bilbao;Titulo,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+2. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+3. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTE DE DOS CARRILES DE CIRCULACIÓN EN ALAMEDA RECALDE, SENTIDO PLAZA MOYÚA
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248277741&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+4. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+5. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso","[{""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTE DE DOS CARRILES DE CIRCULACIÓN EN ALAMEDA RECALDE, SENTIDO PLAZA MOYÚA"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248277741&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}]",
+E017,Cortes en la calle Heros,bilbao_notice_search,web_institucional,Ayuntamiento de Bilbao,Heros;Ayuntamiento de Bilbao,true,Heros;Ayuntamiento de Bilbao,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+2. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+3. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+4. Fuente: Ayuntamiento de Donostia-San Sebastian
+   Tipo: OBRA
+   Carretera: no disponible
+   Causa: OCUPACIÓN DE CARRIL Y CORTE DE CALLE PARA TRABAJOS DE ARBOLADO
+   Sentido: Agerre,cm De 010
+   Municipio/provincia: Donostia / San Sebastián / Gipuzkoa
+   Fecha/hora: 2026-05-12T00:00
+5. Fuente: Trafikoa
+   Nombre: Henao/Heros
+   Carretera: no disponible
+   Municipio/provincia: Henao/Heros / Bizkaia
+   Image URL: https://www.bilbao.eus/camarastrafico/codec0042/snap_c1.jpg
+   Source URL: https://api.euskadi.eus/traffic/v1.0/cameras","[{""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}, {""source"": ""Ayuntamiento de Donostia-San Sebastian"", ""source_type"": ""incidencia"", ""title"": """", ""url"": """", ""tipo_evento"": ""OBRA"", ""timestamp"": ""2026-05-12T00:00""}, {""source"": ""Trafikoa"", ""source_type"": ""camara"", ""title"": ""Henao/Heros"", ""url"": ""https://api.euskadi.eus/traffic/v1.0/cameras"", ""tipo_evento"": ""camara"", ""timestamp"": """"}]",
+E018,Avisos sobre aparcamiento en Bilbao,bilbao_notice_search,web_institucional,Ayuntamiento de Bilbao,aparcamiento;Bilbao,true,aparcamiento;Bilbao,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+2. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+3. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+4. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+5. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CONTINUACIÓN DEL CORTE DE TRÁFICO Y OCUPACIÓN DEL APARCAMIENTO EN LA TRAVESÍA PÁRROCO UGAZ
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248257350&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso","[{""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CONTINUACIÓN DEL CORTE DE TRÁFICO Y OCUPACIÓN DEL APARCAMIENTO EN LA TRAVESÍA PÁRROCO UGAZ"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248257350&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}]",
+E019,Que obras o cortes aparecen en Bizkaimove?,bizkaimove_search,trafico_web,DEIA - Bizkaimove,DEIA - Bizkaimove;Titulo;URL,true,DEIA - Bizkaimove;Titulo;URL,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Un carril cortado (SONDIKA)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Sondika / Bizkaia
+   Carretera: BI-30
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260211152220014633.pdf
+2. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (MALLABIA)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Mallabia / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260416105646017024.pdf
+3. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Sentido cortado (BILBAO)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: BI-636
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260511123939017972.pdf
+4. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Un carril cortado (ERMUA)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Ermua / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+5. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Arcén cortado (GALDAKAO)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Galdakao / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html","[{""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (SONDIKA)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260211152220014633.pdf"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (MALLABIA)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260416105646017024.pdf"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Sentido cortado (BILBAO)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260511123939017972.pdf"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (ERMUA)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Arcén cortado (GALDAKAO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}]",
+E020,Paso alternativo en Bizkaimove,bizkaimove_search,trafico_web,DEIA - Bizkaimove,Paso alternativo;DEIA - Bizkaimove,true,Paso alternativo;DEIA - Bizkaimove,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (MALLABIA)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Mallabia / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260416105646017024.pdf
+2. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (MALLABIA)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Mallabia / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+3. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (AMOROTO)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Amoroto / Bizkaia
+   Carretera: BI-2405
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+4. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (ELORRIO)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Elorrio / Bizkaia
+   Carretera: N-636
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+5. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Paso alternativo (MALLABIA)
+   Tipo de evento: paso_alternativo
+   Municipio/provincia: Mallabia / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html","[{""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (MALLABIA)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260416105646017024.pdf"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (MALLABIA)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (AMOROTO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (ELORRIO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Paso alternativo (MALLABIA)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""paso_alternativo"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}]",
+E021,Cortes de carril en Bizkaimove,bizkaimove_search,trafico_web,DEIA - Bizkaimove,carril;DEIA - Bizkaimove,true,carril;DEIA - Bizkaimove,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Un carril cortado (SONDIKA)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Sondika / Bizkaia
+   Carretera: BI-30
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260211152220014633.pdf
+2. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Sentido cortado (BILBAO)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: BI-636
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/pdf/M-20260511123939017972.pdf
+3. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Un carril cortado (ERMUA)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Ermua / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+4. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Arcén cortado (GALDAKAO)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Galdakao / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html
+5. Documento multifuente: DEIA - Bizkaimove
+   Tipo de fuente: trafico_web
+   Titulo: Un carril cortado (AMOREBIETA-ETXANO)
+   Tipo de evento: corte_carril
+   Municipio/provincia: Amorebieta-Etxano / Bizkaia
+   Carretera: N-634
+   Fecha/hora: 2026-05-12T10:32:12.954706+00:00
+   URL: https://www.bizkaimove.eus/bm/informacion.html","[{""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (SONDIKA)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260211152220014633.pdf"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Sentido cortado (BILBAO)"", ""url"": ""https://www.bizkaimove.eus/pdf/M-20260511123939017972.pdf"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (ERMUA)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Arcén cortado (GALDAKAO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}, {""source"": ""DEIA - Bizkaimove"", ""source_type"": ""trafico_web"", ""title"": ""Un carril cortado (AMOREBIETA-ETXANO)"", ""url"": ""https://www.bizkaimove.eus/bm/informacion.html"", ""tipo_evento"": ""corte_carril"", ""timestamp"": ""2026-05-12T10:32:12.954706+00:00""}]",
+E022,Que informacion reciente hay en Bluesky sobre movilidad?,bluesky_search,social_media,Bluesky,Bluesky;Publicacion social;Autor,true,Bluesky;Publicacion social;Autor,true,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Publicacion social: Bluesky
+   Tipo de fuente: social_media
+   Titulo: Post de Bluesky de gipuzkoagaur.bsky.social
+   Autor: gipuzkoagaur.bsky.social
+   Tipo de evento: movilidad
+   Municipio/provincia: no disponible / Gipuzkoa
+   Carretera: no disponible
+   Fecha/hora: 2026-05-12T06:30:57.692Z
+   URL: https://bsky.app/profile/gipuzkoagaur.bsky.social/post/3mln62u3gpg2o
+2. Publicacion social: Bluesky
+   Tipo de fuente: social_media
+   Titulo: Post de Bluesky de bizkaiagaur.bsky.social
+   Autor: bizkaiagaur.bsky.social
+   Tipo de evento: movilidad
+   Municipio/provincia: no disponible / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 2026-05-11T06:37:28.244Z
+   URL: https://bsky.app/profile/bizkaiagaur.bsky.social/post/3mlknxlaqf22k","[{""source"": ""Bluesky"", ""source_type"": ""social_media"", ""title"": ""Post de Bluesky de gipuzkoagaur.bsky.social"", ""url"": ""https://bsky.app/profile/gipuzkoagaur.bsky.social/post/3mln62u3gpg2o"", ""tipo_evento"": ""movilidad"", ""timestamp"": ""2026-05-12T06:30:57.692Z""}, {""source"": ""Bluesky"", ""source_type"": ""social_media"", ""title"": ""Post de Bluesky de bizkaiagaur.bsky.social"", ""url"": ""https://bsky.app/profile/bizkaiagaur.bsky.social/post/3mlknxlaqf22k"", ""tipo_evento"": ""movilidad"", ""timestamp"": ""2026-05-11T06:37:28.244Z""}]",
+E023,Publicaciones sociales sobre movilidad en Bizkaia,bluesky_search,social_media,Bluesky,Bluesky;Bizkaia,false,Bizkaia,false,"Si. Segun las fuentes recuperadas, se encontraron estos elementos:
+1. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+2. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+3. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTE DE DOS CARRILES DE CIRCULACIÓN EN ALAMEDA RECALDE, SENTIDO PLAZA MOYÚA
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248277741&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+4. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA
+   Tipo de evento: obras
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 11 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso
+5. Documento multifuente: Ayuntamiento de Bilbao
+   Tipo de fuente: web_institucional
+   Titulo: CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI
+   Tipo de evento: corte_trafico
+   Municipio/provincia: Bilbao / Bizkaia
+   Carretera: no disponible
+   Fecha/hora: 8 de mayo de 2026
+   URL: https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso","[{""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LA CALLE HEROS Y EN ALAMEDA MAZARREDO Y CORTES INTERMITENTES DE TRÁFICO EN LA CALLE HEROS"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248309918&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE APARCAMIENTO EN LAS CALLE CORTES Y SAN FRANCISCO"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248282884&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTE DE DOS CARRILES DE CIRCULACIÓN EN ALAMEDA RECALDE, SENTIDO PLAZA MOYÚA"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248277741&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""OCUPACIÓN DE CALZADA, ACERA Y APARCAMIENTO EN LA CALLE TXOTENA"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248274716&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""obras"", ""timestamp"": ""11 de mayo de 2026""}, {""source"": ""Ayuntamiento de Bilbao"", ""source_type"": ""web_institucional"", ""title"": ""CORTES DE TRÁFICO Y OCUPACIÓN DE ACERA Y APARCAMIENTOS EN LA CALLE TIBOLI"", ""url"": ""https://www.bilbao.eus/cs/Satellite?c=BIO_Aviso_FA&cid=1279248262990&language=es&pageid=3000075232&pagename=Bilbaonet%2FBIO_Aviso_FA%2FBIO_Aviso"", ""tipo_evento"": ""corte_trafico"", ""timestamp"": ""8 de mayo de 2026""}]",
+E024,Hay datos sobre vuelos cancelados en Loiu?,no_evidence,none,NONE,informacion suficiente,true,informacion suficiente,true,No encontré información suficiente en las fuentes disponibles.,[],
+E025,Cual es el precio del metro en Paris?,no_evidence,none,NONE,informacion suficiente,true,informacion suficiente,true,No encontré información suficiente en las fuentes disponibles.,[],

@@ -1,0 +1,26 @@
+id,question,expected_intent,expected_entities,expected_source_type,expected_source,expected_answer_contains,notes
+E001,Que incidencias hay en la A-8?,incidencia_search,carretera=A-8,incidencia,Gobierno Pais Vasco,A-8;Carretera;Fecha,Incidencias estructuradas de Trafikoa.
+E002,Hay obras en la N-1?,incidencia_search,carretera=N-1;tipo=obras,incidencia,Gobierno Pais Vasco,N-1;Obras;Fecha,Consulta de obras en incidencias Trafikoa.
+E003,Hay accidentes o averias recientes?,incidencia_search,tipo=accidente|averia,incidencia,Gobierno Pais Vasco,Tipo;Fecha,Consulta general sobre incidencias recientes.
+E004,Incidencias en Gipuzkoa?,incidencia_search,provincia=Gipuzkoa,incidencia,Gobierno Pais Vasco,Gipuzkoa;Fecha,Entidad territorial en Trafikoa.
+E005,Que pasa en la AP-8?,incidencia_search,carretera=AP-8,incidencia,Gobierno Pais Vasco,AP-8;Carretera,Carretera concreta en incidencias.
+E006,Que camaras hay en Bilbao?,camera_search,municipio=Bilbao,camara,Trafikoa,Camaras;Imagen;Bilbao,Debe activar busqueda estructurada de camaras.
+E007,Muestrame camaras en la BI-637,camera_search,carretera=BI-637,camara,Trafikoa,BI-637;Imagen,Camaras por carretera.
+E008,Camaras con imagen en Bizkaia,camera_search,provincia=Bizkaia;only_with_image=true,camara,Trafikoa,Imagen;Bizkaia,Camaras con image_url.
+E009,Hay camara en Enekuri?,camera_search,q=Enekuri,camara,Trafikoa,Enekuri;Imagen,Busqueda textual de camaras.
+E010,Ver camaras en A-8,camera_search,carretera=A-8,camara,Trafikoa,A-8;Imagen,Intencion explicita de camaras.
+E011,Hay congestion en Bilbao?,congestion_search,municipio=Bilbao,congestion,Ayuntamiento Bilbao,Bilbao;congestion,Registros de congestion calculados.
+E012,Nivel de congestion del medidor 248,congestion_search,medidor=248,congestion,Ayuntamiento Bilbao,medidor:248;Nivel,Consulta por medidor.
+E013,Que registros de trafico hay en Bilbao?,congestion_search,municipio=Bilbao,congestion,Ayuntamiento Bilbao,Bilbao;valor,Consulta amplia de flujo/congestion.
+E014,Congestion alta en Bilbao?,congestion_search,municipio=Bilbao;nivel=alta,congestion,Ayuntamiento Bilbao,alta;Bilbao,Consulta de nivel concreto.
+E015,Que cortes recientes hay en Bilbao?,bilbao_notice_search,municipio=Bilbao;tipo=corte,web_institucional,Ayuntamiento de Bilbao,Ayuntamiento de Bilbao;Titulo;URL,Avisos institucionales de Bilbao.
+E016,Avisos de movilidad del Ayuntamiento de Bilbao,bilbao_notice_search,municipio=Bilbao,web_institucional,Ayuntamiento de Bilbao,Ayuntamiento de Bilbao;Titulo,Consulta fuente institucional.
+E017,Cortes en la calle Heros,bilbao_notice_search,calle=Heros,web_institucional,Ayuntamiento de Bilbao,Heros;Ayuntamiento de Bilbao,Entidad calle en avisos.
+E018,Avisos sobre aparcamiento en Bilbao,bilbao_notice_search,municipio=Bilbao;tema=aparcamiento,web_institucional,Ayuntamiento de Bilbao,aparcamiento;Bilbao,Avisos de ocupacion/aparcamiento.
+E019,Que obras o cortes aparecen en Bizkaimove?,bizkaimove_search,source=Bizkaimove,trafico_web,DEIA - Bizkaimove,DEIA - Bizkaimove;Titulo;URL,Informacion avanzada de trafico.
+E020,Paso alternativo en Bizkaimove,bizkaimove_search,tipo=paso_alternativo,trafico_web,DEIA - Bizkaimove,Paso alternativo;DEIA - Bizkaimove,Tipo de evento Bizkaimove.
+E021,Cortes de carril en Bizkaimove,bizkaimove_search,tipo=corte_carril,trafico_web,DEIA - Bizkaimove,carril;DEIA - Bizkaimove,Cortes de carril desde Bizkaimove.
+E022,Que informacion reciente hay en Bluesky sobre movilidad?,bluesky_search,source=Bluesky,social_media,Bluesky,Bluesky;Publicacion social;Autor,Publicaciones sociales del timeline.
+E023,Publicaciones sociales sobre movilidad en Bizkaia,bluesky_search,provincia=Bizkaia,social_media,Bluesky,Bluesky;Bizkaia,Texto social no estructurado.
+E024,Hay datos sobre vuelos cancelados en Loiu?,no_evidence,tema=vuelos,none,NONE,informacion suficiente,Consulta fuera del alcance de movilidad terrestre indexada.
+E025,Cual es el precio del metro en Paris?,no_evidence,tema=metro Paris,none,NONE,informacion suficiente,Consulta fuera del corpus local.

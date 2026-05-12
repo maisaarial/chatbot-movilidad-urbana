@@ -242,6 +242,7 @@ def _camera_to_source(camera: dict[str, Any]) -> dict[str, Any]:
     metadata = dict(camera)
     metadata["document_type"] = "camara"
     metadata["tipo"] = "camara"
+    metadata["source"] = "Trafikoa"
     return {
         "text": (
             f"Cámara {camera.get('nombre') or 'no disponible'} en "
