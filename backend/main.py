@@ -17,6 +17,7 @@ from src.sources.base import (
     summarize_by_source,
 )
 from src.sources.bilbao import fetch_bilbao_documents
+from src.sources.deia import fetch_deia_documents
 from src.trafikoa.cameras import get_cameras
 from src.trafikoa.camera_search import get_camera_by_id, search_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
@@ -37,15 +38,37 @@ class ChatRequest(BaseModel):
 
 
 def rebuild_corpus() -> dict[str, Any]:
+    documents = []
+    errors = []
+
     bilbao_documents, bilbao_raw = fetch_bilbao_documents()
     save_raw_json(bilbao_raw, settings.raw_data_dir / "bilbao_raw.json")
+    documents.extend(bilbao_documents)
 
-    documents = deduplicate_documents(bilbao_documents)
+    try:
+        deia_documents, deia_raw = fetch_deia_documents()
+    except Exception as exc:
+        deia_documents = []
+        deia_raw = {
+            "source": "DEIA",
+            "status": "error",
+            "message": (
+                "No se pudo consultar DEIA. Se conserva el corpus con las demas "
+                "fuentes disponibles."
+            ),
+            "error": str(exc),
+        }
+        errors.append({"source": "DEIA", "error": str(exc)})
+    save_raw_json(deia_raw, settings.raw_data_dir / "deia_raw.json")
+    documents.extend(deia_documents)
+
+    documents = deduplicate_documents(documents)
     save_corpus_csv(documents, settings.processed_data_dir / "corpus_movilidad.csv")
 
     return {
         "count": len(documents),
         "by_source": summarize_by_source(documents),
+        "errors": errors,
         "items": [document.to_dict() for document in documents],
     }
 
