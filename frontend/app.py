@@ -48,7 +48,10 @@ def _extract_error_detail(response: requests.Response) -> str:
 
 def _source_label(index: int, metadata: dict) -> str:
     parts = [
+        metadata.get("source"),
+        metadata.get("source_type"),
         metadata.get("document_type") or metadata.get("tipo") or "fuente",
+        metadata.get("title"),
         metadata.get("carretera"),
         metadata.get("tipo")
         if metadata.get("tipo") != metadata.get("document_type")
@@ -62,6 +65,11 @@ def _source_label(index: int, metadata: dict) -> str:
 
 def _source_summary(metadata: dict) -> dict:
     return {
+        "source": _source_value(metadata, "source"),
+        "source_type": _source_value(metadata, "source_type"),
+        "title": _source_value(metadata, "title"),
+        "url": _source_value(metadata, "url"),
+        "tipo_evento": _source_value(metadata, "tipo_evento"),
         "carretera": _source_value(metadata, "carretera"),
         "tipo": _source_value(metadata, "tipo"),
         "causa": _source_value(metadata, "causa"),
@@ -374,6 +382,9 @@ with tab_chatbot:
                 maps_url = _maps_url_from_item(metadata)
                 if maps_url:
                     st.markdown(f"[Ver en Google Maps]({maps_url})")
+                source_url = metadata.get("url") or metadata.get("source_url")
+                if source_url:
+                    st.markdown(f"[Abrir fuente original]({source_url})")
                 st.markdown("**Metadata completa**")
                 st.json(metadata)
 

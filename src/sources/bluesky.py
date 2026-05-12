@@ -251,6 +251,12 @@ def clean_text(value: Any) -> str:
     return text.strip()
 
 
+def clean_scalar(value: Any) -> str:
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", html.unescape(str(value))).strip()
+
+
 def build_rag_text(document: CorpusDocument, author: str = "", language: str = "") -> str:
     pieces = [
         f"Fuente: {document.source}",
@@ -422,7 +428,7 @@ def _post_to_raw_item(post: dict[str, Any]) -> dict[str, str]:
 def _raw_item_to_document(item: dict[str, str]) -> CorpusDocument:
     text = clean_text(item.get("text"))
     raw_text = clean_text(item.get("raw_text") or text)
-    url = clean_text(item.get("post_url") or item.get("url"))
+    url = clean_scalar(item.get("post_url") or item.get("url"))
     author = clean_text(item.get("author_handle") or item.get("author"))
     language = clean_text(item.get("language"))
     title = f"Post de Bluesky de {author}" if author else "Post de Bluesky"

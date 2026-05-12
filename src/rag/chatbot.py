@@ -57,6 +57,13 @@ CAMERA_QUERY_STOPWORDS = {
     "una",
     "un",
 }
+CORPUS_DOCUMENT_TYPE = "corpus_multifuente"
+CORPUS_SOURCE_ALIASES = {
+    "ayuntamiento de bilbao": "Ayuntamiento de Bilbao",
+    "deia": "DEIA - Bizkaimove",
+    "bizkaimove": "DEIA - Bizkaimove",
+    "bluesky": "Bluesky",
+}
 
 SYSTEM_PROMPT = """
 Eres un asistente de movilidad urbana. Responde SOLO usando el contexto recuperado.
@@ -70,6 +77,8 @@ Reglas de contenido:
 - Para incidencias, incluye carretera, tipo, causa, sentido, municipio, provincia y timestamp.
 - Para congestion, incluye carretera o medidor, nivel de congestion, valor_trafico, unidad, municipio, provincia y timestamp.
 - Para camaras, incluye nombre, carretera, municipio, provincia e image_url o source_url.
+- Para corpus multifuente, menciona source, source_type, title, tipo_evento, timestamp y URL si existen.
+- Para Bluesky, indica que es una publicacion social y menciona el autor si esta disponible.
 - Si un campo solicitado no aparece en la fuente, escribe "no disponible" para ese campo.
 - No digas solo "si, hay varias"; debes listar cuales son.
 - Mantente fiel a las fuentes recuperadas y no agregues explicaciones externas.
@@ -267,6 +276,16 @@ def _select_structured_results(
     if not _has_strong_evidence(results):
         return []
 
+    preferred_source = _preferred_corpus_source(question)
+    if preferred_source:
+        filtered_results = [
+            result
+            for result in results
+            if result.get("metadata", {}).get("source") == preferred_source
+        ]
+        if filtered_results:
+            return filtered_results
+
     preferred_type = _preferred_document_type(question)
     if preferred_type:
         filtered_results = [
@@ -277,7 +296,7 @@ def _select_structured_results(
         if filtered_results:
             return filtered_results
 
-    structured_types = {"incidencia", "congestion", "camara"}
+    structured_types = {"incidencia", "congestion", "camara", CORPUS_DOCUMENT_TYPE}
     return [
         result
         for result in results
@@ -298,6 +317,23 @@ def _has_strong_evidence(results: list[dict[str, Any]]) -> bool:
 
 def _preferred_document_type(question: str) -> str | None:
     normalized_question = _normalize(question)
+    if any(
+        term in normalized_question
+        for term in [
+            "ayuntamiento",
+            "aviso",
+            "avisos",
+            "noticia",
+            "noticias",
+            "deia",
+            "bizkaimove",
+            "bluesky",
+            "publicacion",
+            "publicaciones",
+            "social",
+        ]
+    ):
+        return CORPUS_DOCUMENT_TYPE
     if any(term in normalized_question for term in ["camara", "camaras", "imagen"]):
         return "camara"
     if any(term in normalized_question for term in ["congestion", "retencion", "vehiculo", "vehiculos"]):
@@ -307,7 +343,21 @@ def _preferred_document_type(question: str) -> str | None:
     return None
 
 
+def _preferred_corpus_source(question: str) -> str | None:
+    normalized_question = _normalize(question)
+    for alias, source in CORPUS_SOURCE_ALIASES.items():
+        if alias in normalized_question:
+            return source
+    return None
+
+
 def _build_structured_answer(results: list[dict[str, Any]]) -> str:
+    lines = ["Si. Segun las fuentes recuperadas, se encontraron estos elementos:"]
+    for index, result in enumerate(results, start=1):
+        metadata = result.get("metadata", {})
+        lines.extend(_format_structured_result(index, metadata))
+    return "\n".join(lines)
+
     document_type = results[0].get("metadata", {}).get("document_type")
     if document_type == "incidencia":
         lines = ["Sí. Según las fuentes recuperadas, se encontraron estas incidencias:"]
@@ -382,6 +432,83 @@ def _build_structured_answer(results: list[dict[str, Any]]) -> str:
             ]
         )
     return "\n".join(lines)
+
+
+def _format_structured_result(index: int, metadata: dict[str, Any]) -> list[str]:
+    document_type = metadata.get("document_type")
+    if document_type == "incidencia":
+        return [
+            f"{index}. Fuente: {_field(metadata, 'source')}",
+            f"   Tipo: {_field(metadata, 'tipo')}",
+            f"   Carretera: {_field(metadata, 'carretera')}",
+            f"   Causa: {_field(metadata, 'causa')}",
+            f"   Sentido: {_field(metadata, 'sentido')}",
+            (
+                "   Municipio/provincia: "
+                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+            ),
+            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+        ]
+
+    if document_type == "congestion":
+        return [
+            f"{index}. Fuente: {_field(metadata, 'source')}",
+            f"   Nivel: {_field(metadata, 'congestion')}",
+            f"   Carretera o medidor: {_field(metadata, 'carretera')}",
+            (
+                "   Valor de trafico: "
+                f"{_field(metadata, 'valor_trafico')} {_field(metadata, 'unidad')}"
+            ),
+            (
+                "   Municipio/provincia: "
+                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+            ),
+            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+        ]
+
+    if document_type == "camara":
+        return [
+            f"{index}. Fuente: {_field(metadata, 'source')}",
+            f"   Nombre: {_field(metadata, 'nombre')}",
+            f"   Carretera: {_field(metadata, 'carretera')}",
+            (
+                "   Municipio/provincia: "
+                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+            ),
+            f"   Image URL: {_field(metadata, 'image_url')}",
+            f"   Source URL: {_field(metadata, 'source_url')}",
+        ]
+
+    if document_type == CORPUS_DOCUMENT_TYPE:
+        source = _field(metadata, "source")
+        prefix = "Publicacion social" if source == "Bluesky" else "Documento multifuente"
+        lines = [
+            f"{index}. {prefix}: {source}",
+            f"   Tipo de fuente: {_field(metadata, 'source_type')}",
+            f"   Titulo: {_field(metadata, 'title')}",
+            f"   Tipo de evento: {_field(metadata, 'tipo_evento')}",
+            (
+                "   Municipio/provincia: "
+                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+            ),
+            f"   Carretera: {_field(metadata, 'carretera')}",
+            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+            f"   URL: {_field(metadata, 'url')}",
+        ]
+        if source == "Bluesky":
+            lines.insert(3, f"   Autor: {_field(metadata, 'author')}")
+        return lines
+
+    return [
+        f"{index}. Fuente: {_field(metadata, 'source')}",
+        f"   Tipo: {_field(metadata, 'tipo')}",
+        f"   Carretera: {_field(metadata, 'carretera')}",
+        (
+            "   Municipio/provincia: "
+            f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
+        ),
+        f"   Fecha/hora: {_field(metadata, 'timestamp')}",
+    ]
 
 
 def _build_prompt(question: str, context: str) -> str:

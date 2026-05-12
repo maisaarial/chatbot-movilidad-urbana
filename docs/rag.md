@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-El chatbot RAG permite hacer preguntas en lenguaje natural sobre incidencias, camaras y congestion. El sistema debe responder solo con informacion recuperada desde el indice local.
+El chatbot RAG permite hacer preguntas en lenguaje natural sobre incidencias, camaras, congestion y el corpus multifuente de movilidad. El sistema debe responder solo con informacion recuperada desde el indice local.
 
 No se usan APIs pagas. No se usa OpenAI API. El modelo generativo se ejecuta localmente con Ollama.
 
@@ -28,20 +28,27 @@ El indice se construye desde:
 data/processed/incidents.csv
 data/processed/cameras.csv
 data/processed/congestion.csv
+data/processed/corpus_movilidad.csv
 ```
 
 Reglas:
 
 - Si una fila tiene `rag_text`, se usa esa columna como texto principal.
-- Si no tiene `rag_text`, se construye un texto descriptivo con las columnas disponibles.
+- Si una fila del corpus multifuente no tiene `rag_text`, se construye texto con `title` + `text`.
+- Para los CSV de Trafikoa sin `rag_text`, se construye un texto descriptivo con las columnas disponibles.
 - Se guardan metadatos para trazabilidad.
 
 Metadatos principales:
 
 | Metadata | Descripcion |
 |---|---|
-| `document_type` | Tipo de documento: incidencia, camara o congestion. |
+| `document_type` | Tipo de documento: incidencia, camara, congestion o corpus_multifuente. |
 | `tipo` | Tipo propio del dato cuando existe. |
+| `source` | Fuente normalizada del documento. |
+| `source_type` | Tipo de fuente en el corpus multifuente. |
+| `title` | Titulo del aviso, evento web o post cuando existe. |
+| `url` | URL original, PDF o post cuando existe. |
+| `tipo_evento` | Tipo de evento del corpus multifuente. |
 | `carretera` | Carretera o medidor asociado. |
 | `municipio` | Municipio. |
 | `provincia` | Provincia. |
@@ -120,7 +127,9 @@ Comando:
 Resultado esperado:
 
 ```text
-RAG index rebuilt: 1412 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+RAG index rebuilt: 1294 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+Document types indexed: {'incidencia': 423, 'camara': 489, 'congestion': 350, 'corpus_multifuente': 32}
+Sources indexed: {'Gobierno Pais Vasco': 260, 'Ayuntamiento Bilbao': 475, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
 ```
 
 El numero puede variar si se actualizan los CSV.
@@ -145,6 +154,8 @@ Devuelve:
 - distancia
 - score aproximado
 - metadata
+
+El retriever combina busqueda vectorial con coincidencias exactas sobre texto y metadata. Cuando la pregunta menciona una fuente concreta, como `Bizkaimove` o `Bluesky`, prioriza resultados cuya metadata `source`, `source_type` o `title` corresponda a esa fuente. Esto evita que URLs historicas de imagenes de camaras contaminen consultas sobre DEIA - Bizkaimove.
 
 Ejemplo:
 
@@ -250,7 +261,7 @@ Metadata completa: {"carretera": "A-8", "causa": "Salida", ...}
 Texto recuperado: id: 363423. timestamp: ...
 ```
 
-Para datos tabulares suficientemente claros, el chatbot genera una respuesta extractiva directamente desde la metadata recuperada. Esto evita respuestas genericas como "si, hay varias incidencias" y obliga a listar los campos concretos disponibles.
+Para datos tabulares y documentos multifuente suficientemente claros, el chatbot genera una respuesta extractiva directamente desde la metadata recuperada. Esto evita respuestas genericas como "si, hay varias incidencias" y obliga a listar los campos concretos disponibles.
 
 Ejemplo de respuesta para incidencias:
 
@@ -266,6 +277,11 @@ Si. Segun las fuentes recuperadas, se encontraron estas incidencias:
 
 En el frontend, la pestaña `Chatbot` muestra las fuentes usadas con una etiqueta descriptiva. Para cada fuente se presenta:
 
+- source
+- source_type
+- title
+- url, como enlace clicable cuando existe
+- tipo_evento
 - carretera
 - tipo
 - causa
@@ -333,6 +349,7 @@ Reconstruye manualmente el indice desde:
 data/processed/incidents.csv
 data/processed/cameras.csv
 data/processed/congestion.csv
+data/processed/corpus_movilidad.csv
 ```
 
 Comando:
@@ -351,6 +368,8 @@ Streamlit incluye un boton `Actualizar indice RAG ahora` en la pestana `RAG`. Es
 | Modelo configurable | Si `qwen2.5:3b` no esta descargado, hay que ejecutar `ollama pull qwen2.5:3b`. |
 | Embeddings iniciales | Son locales y ligeros; no equivalen a modelos semanticos grandes. |
 | Calidad condicionada por CSV | El chatbot solo puede responder sobre informacion indexada. |
+| Fuentes heterogeneas | Trafikoa es estructurada, Bilbao es institucional, DEIA - Bizkaimove es web de trafico y Bluesky es texto social; la calidad y estabilidad no son equivalentes. |
+| Bluesky | Depende de las cuentas seguidas y de la actividad reciente del timeline. |
 | No usa conocimiento externo | Si el contexto no contiene evidencia suficiente, debe indicarlo. |
 
 ## Como Probar El Chat

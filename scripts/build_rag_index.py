@@ -16,6 +16,8 @@ def main() -> None:
         f"collection={result['collection']}, "
         f"persist_dir={result['persist_dir']}"
     )
+    print(f"Document types indexed: {result.get('document_type_counts', {})}")
+    print(f"Sources indexed: {result.get('source_counts', {})}")
 
 
 if __name__ == "__main__":

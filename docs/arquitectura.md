@@ -146,9 +146,10 @@ Ayuntamiento de Bilbao
   -> data/raw/bilbao_raw.json
   -> data/processed/corpus_movilidad.csv
   -> GET /corpus y pestana Corpus multifuente
+  -> ChromaDB como document_type=corpus_multifuente
 ```
 
-En esta fase el corpus multifuente no se indexa todavia en ChromaDB. Solo se prepara `rag_text` para una integracion posterior.
+El corpus multifuente se indexa tambien en ChromaDB. `rag_text` es el texto principal para recuperacion semantica; si no existe, el indexador usa `title` + `text`.
 
 ## Congestion
 
@@ -171,7 +172,7 @@ Los registros de congestion ya incluyen el campo `rag_text`, por ejemplo:
 Congestion media en medidor:248, Bilbao, Bizkaia. Valor de trafico: 86.0 vehiculos/intervalo. Fecha: 2026-05-11T08:25. Fuente: Ayuntamiento Bilbao.
 ```
 
-Esto permite que incidencias, camaras y congestion se consulten como documentos recuperables por el chatbot.
+Esto permite que incidencias, camaras, congestion y corpus multifuente se consulten como documentos recuperables por el chatbot.
 
 El endpoint `/chat` usa el flujo:
 
@@ -184,4 +185,4 @@ Pregunta del usuario
   -> respuesta + fuentes
 ```
 
-El RAG sigue usando los CSV de Trafikoa ya consolidados (`incidents.csv`, `cameras.csv` y `congestion.csv`). El nuevo `corpus_movilidad.csv` queda preparado pero fuera del indice hasta que se valide la calidad del dataset multifuente.
+El RAG usa los CSV de Trafikoa ya consolidados (`incidents.csv`, `cameras.csv` y `congestion.csv`) y tambien `corpus_movilidad.csv` con fuentes heterogeneas: Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky.

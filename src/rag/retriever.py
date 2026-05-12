@@ -63,6 +63,7 @@ def retrieve(query: str, k: int = 5) -> list[dict[str, Any]]:
 
     return [
         {
+            "id": result.get("id"),
             "text": result.get("document", ""),
             "distance": result.get("distance"),
             "score": _distance_to_score(result.get("distance")),
@@ -96,6 +97,7 @@ def _exact_matches(
         return []
 
     road_terms = _road_terms(query)
+    source_terms = _source_terms(query)
     raw = vector_store.collection.get(include=["documents", "metadatas"])
     documents = raw.get("documents") or []
     metadatas = raw.get("metadatas") or []
@@ -112,6 +114,14 @@ def _exact_matches(
                 ]
             )
         )
+        source_haystack = _normalize_text(
+            " ".join(
+                str(metadata.get(field) or "")
+                for field in ["source", "source_type", "title", "document_type"]
+            )
+        )
+        if source_terms and not any(term in source_haystack for term in source_terms):
+            continue
         if road_terms:
             matched_terms = [term for term in road_terms if term in haystack]
         else:
@@ -154,6 +164,15 @@ def _road_terms(query: str) -> list[str]:
     normalized_query = _normalize_text(query)
     terms = re.findall(r"\b[a-z]{1,3}-\d+[a-z]?\b", normalized_query)
     return list(dict.fromkeys(terms))
+
+
+def _source_terms(query: str) -> list[str]:
+    normalized_query = _normalize_text(query)
+    terms = []
+    for term in ["bizkaimove", "deia", "bluesky", "ayuntamiento"]:
+        if term in normalized_query:
+            terms.append(term)
+    return terms
 
 
 def _normalize_text(value: str) -> str:

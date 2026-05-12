@@ -10,7 +10,7 @@ Fuentes implementadas:
 |---|---|---|
 | Ayuntamiento de Bilbao | `web_institucional` | `https://www.bilbao.eus/cs/Satellite?cid=3000075232&language=es&pageid=3000075232&pagename=Bilbaonet%2FPage%2FBIO_ListadoAvisos` |
 | DEIA - Bizkaimove | `trafico_web` | `https://www.deia.eus/servicios/trafico/` con iframe a `https://www.bizkaimove.eus/bm/informacion.html` |
-| Bluesky | `social_media` | API XRPC `app.bsky.feed.searchPosts` |
+| Bluesky | `social_media` | API XRPC `app.bsky.feed.getTimeline`; `app.bsky.feed.searchPosts` solo como fallback |
 
 No se ha implementado Telegram.
 
@@ -56,7 +56,7 @@ Esa variabilidad es util para PLN porque permite evaluar limpieza, normalizacion
 |---|---|
 | `data/raw/bilbao_raw.json` | Avisos extraidos del Ayuntamiento de Bilbao. |
 | `data/raw/deia_raw.json` | Diagnostico de la pagina DEIA/Bizkaimove, mensajes informativos e items extraidos de informacion avanzada. |
-| `data/raw/bluesky_raw.json` | Resultado de busqueda Bluesky o motivo claro si requiere autenticacion. |
+| `data/raw/bluesky_raw.json` | Timeline de Bluesky, estadisticas de filtrado o motivo claro si requiere autenticacion. |
 | `data/processed/corpus_movilidad.csv` | Corpus consolidado con el esquema comun. |
 
 ## Construccion
@@ -68,10 +68,10 @@ Esa variabilidad es util para PLN porque permite evaluar limpieza, normalizacion
 Resultado de referencia obtenido el 12/05/2026 con credenciales Bluesky configuradas:
 
 ```text
-Corpus multifuente construido: total=34, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=32, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
-En esa ejecucion DEIA - Bizkaimove devolvio 24 obras o afecciones reales. Bluesky leyo 55 posts del timeline, filtro 2 como relevantes, descarto 53 y no uso fallback global.
+En esa ejecucion DEIA - Bizkaimove devolvio 22 obras o afecciones reales. Bluesky leyo 57 posts del timeline de cuentas seguidas, filtro 2 como relevantes, descarto 55 y no uso fallback global.
 
 ## Endpoints
 
@@ -95,10 +95,11 @@ La pestana `Corpus multifuente` muestra la tabla consolidada, conteo por fuente 
 
 ## Relacion Con RAG
 
-El corpus multifuente no se indexa todavia en ChromaDB. La decision separa dos fases:
+El corpus multifuente se indexa en ChromaDB como `document_type=corpus_multifuente` junto con `incidents.csv`, `cameras.csv` y `congestion.csv`. El indexador usa `rag_text` como texto principal; si una fila no lo tiene, construye texto con `title` + `text`.
 
-1. Consolidar y validar el dataset multifuente.
-2. Integrarlo despues en RAG cuando el formato y la calidad esten estabilizados.
+La metadata preserva `source`, `source_type`, `title`, `url`, `municipio`, `provincia`, `carretera`, `tipo_evento` y `timestamp`. Esto permite que el chatbot cite explicitamente Ayuntamiento de Bilbao, DEIA - Bizkaimove o Bluesky, y que el frontend muestre enlaces clicables cuando existen.
+
+La integracion permite retrieval semantico sobre fuentes heterogeneas: datos estructurados de Trafikoa, avisos institucionales de Bilbao, informacion avanzada de trafico de Bizkaimove y publicaciones sociales de Bluesky.
 
 ## Limitaciones
 

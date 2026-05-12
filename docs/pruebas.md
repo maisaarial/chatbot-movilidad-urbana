@@ -180,12 +180,12 @@ Comando:
 Resultado obtenido:
 
 ```text
-Corpus multifuente construido: total=34, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 24, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=32, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
 Estado: Paso.
 
-Nota: el numero de documentos puede cambiar porque Bilbao, DEIA - Bizkaimove y Bluesky son fuentes vivas. En esta ejecucion Bluesky uso credenciales reales desde `.env`, leyo 55 posts del timeline de cuentas seguidas, filtro 2 como relevantes, descarto 53 y no uso fallback global.
+Nota: el numero de documentos puede cambiar porque Bilbao, DEIA - Bizkaimove y Bluesky son fuentes vivas. En esta ejecucion Bluesky uso credenciales reales desde `.env`, leyo 57 posts del timeline de cuentas seguidas, filtro 2 como relevantes, descarto 55 y no uso fallback global.
 
 ### Archivos Generados
 
@@ -199,9 +199,9 @@ Resultado obtenido:
 
 ```text
 bilbao_raw.json        8781 bytes
-deia_raw.json          9187 bytes
-bluesky_raw.json      58192 bytes
-corpus_movilidad.csv  33912 bytes
+deia_raw.json          8507 bytes
+bluesky_raw.json      60253 bytes
+corpus_movilidad.csv  32577 bytes
 ```
 
 Estado: Paso.
@@ -217,13 +217,13 @@ Comando:
 Resultado obtenido:
 
 ```text
-rows 34
+rows 32
 sources ['Ayuntamiento de Bilbao', 'Bluesky', 'DEIA - Bizkaimove']
-by_source {'Ayuntamiento de Bilbao': 8, 'Bluesky': 2, 'DEIA - Bizkaimove': 24}
+by_source {'Ayuntamiento de Bilbao': 8, 'Bluesky': 2, 'DEIA - Bizkaimove': 22}
 bluesky_status ok
 bluesky_posts 2
-posts_read_timeline 55
-posts_discarded 53
+posts_read_timeline 57
+posts_discarded 55
 fallback_used False
 ```
 
@@ -247,7 +247,7 @@ $r = curl.exe -s --max-time 30 "http://127.0.0.1:8000/corpus" | ConvertFrom-Json
 Resultado obtenido:
 
 ```text
-count=34
+count=32
 first_source=Ayuntamiento de Bilbao
 first_tipo=corte_trafico
 ```
@@ -270,9 +270,9 @@ $r = curl.exe -s --max-time 120 -X POST "http://127.0.0.1:8000/corpus/refresh" |
 Resultado obtenido:
 
 ```text
-count=34
+count=32
 source_count=8
-deia_count=24
+deia_count=22
 bluesky_count=2
 errors=0
 ```
@@ -310,7 +310,9 @@ Comando:
 Resultado obtenido:
 
 ```text
-RAG index rebuilt: 1412 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+RAG index rebuilt: 1294 documents, collection=movilidad_urbana, persist_dir=data\vectorstore
+Document types indexed: {'incidencia': 423, 'camara': 489, 'congestion': 350, 'corpus_multifuente': 32}
+Sources indexed: {'Gobierno Pais Vasco': 260, 'Ayuntamiento Bilbao': 475, 'Trafikoa': 489, 'Ayuntamiento de Bilbao': 8, 'DEIA - Bizkaimove': 22, 'Bluesky': 2, ...}
 ```
 
 Estado: Paso.
@@ -347,10 +349,11 @@ Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/rag/status" -TimeoutSe
 Resultado obtenido:
 
 ```text
-documents_indexed=1412
+documents_indexed=1294
 ttl_seconds=300
 is_stale=False
 status=ready
+corpus_multifuente=32
 ```
 
 Estado: Paso.
@@ -368,7 +371,7 @@ Resultado obtenido:
 ```text
 refreshed=True
 last_refresh_reason=manual
-documents_indexed=1412
+documents_indexed=1294
 is_stale=False
 ```
 
@@ -398,6 +401,55 @@ after refreshed=True reason=ttl_expired stale=False results=2
 Interpretacion:
 
 El endpoint de busqueda detecto que el indice habia caducado y lo reconstruyo automaticamente antes de devolver resultados.
+
+Estado: Paso.
+
+### Chat Con Corpus Multifuente
+
+Comando:
+
+```powershell
+$questions = @(
+  "¿Qué cortes recientes hay en Bilbao?",
+  "¿Qué obras o cortes aparecen en Bizkaimove?",
+  "¿Qué información reciente hay en Bluesky sobre movilidad?",
+  "¿Qué noticias o avisos hay sobre movilidad?"
+)
+foreach ($q in $questions) {
+  $body = @{ question = $q } | ConvertTo-Json
+  $r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json" -TimeoutSec 240
+  $r.sources | Select-Object -First 3 -ExpandProperty metadata | Select-Object source,source_type,title,url,tipo_evento,timestamp
+}
+```
+
+Resultado obtenido:
+
+```text
+Bilbao: usa Ayuntamiento de Bilbao con titulos reales y URLs de avisos.
+Bizkaimove: usa DEIA - Bizkaimove con titulos como "Un carril cortado (SONDIKA)" y enlaces PDF o informacion.html.
+Bluesky: usa publicaciones sociales, muestra autor en el titulo/metadata y URLs bsky.app.
+Noticias o avisos: recupera corpus_multifuente y cita source, source_type, title, url, tipo_evento y timestamp.
+```
+
+Estado: Paso.
+
+### Camaras Siguen Usando Busqueda Estructurada
+
+Comando:
+
+```powershell
+$body = @{ question = "¿Qué cámaras hay en Bilbao?" } | ConvertTo-Json
+$r = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json" -TimeoutSec 120
+$r.sources[0].metadata.document_type
+$r.sources[0].metadata.image_url
+```
+
+Resultado obtenido:
+
+```text
+document_type=camara
+image_url=http://www.bizkaimove.com/camaras/cam51.jpg
+```
 
 Estado: Paso.
 
