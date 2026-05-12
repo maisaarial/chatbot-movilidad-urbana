@@ -120,6 +120,25 @@ def _sort_cameras_for_display(cameras: list[dict]) -> list[dict]:
 def _display_camera_results(cameras: list[dict]) -> None:
     sorted_cameras = _sort_cameras_for_display(cameras)
     st.dataframe(sorted_cameras, use_container_width=True, hide_index=True)
+    cameras_with_image = [camera for camera in sorted_cameras if camera.get("image_url")]
+    if cameras_with_image:
+        preview_camera = cameras_with_image[0]
+        st.markdown("**Vista previa con imagen**")
+        st.table(
+            [
+                {
+                    "id": preview_camera.get("id", ""),
+                    "nombre": preview_camera.get("nombre", ""),
+                    "carretera": preview_camera.get("carretera", ""),
+                    "municipio": preview_camera.get("municipio", ""),
+                    "image_url": preview_camera.get("image_url", ""),
+                }
+            ]
+        )
+        _display_camera_image(
+            preview_camera.get("image_url", ""),
+            caption=preview_camera.get("nombre", ""),
+        )
     for camera in sorted_cameras:
         title = " | ".join(
             str(value)
@@ -146,11 +165,7 @@ def _display_camera_results(cameras: list[dict]) -> None:
             )
             image_url = camera.get("image_url")
             if image_url:
-                try:
-                    st.image(image_url, use_container_width=True)
-                except Exception as exc:
-                    st.warning(f"No se pudo renderizar la imagen: {exc}")
-                st.markdown(f"[Ver imagen original]({image_url})")
+                _display_camera_image(image_url)
             else:
                 st.info("No hay imagen disponible.")
 
@@ -161,6 +176,18 @@ def _display_camera_results(cameras: list[dict]) -> None:
             source_url = camera.get("source_url")
             if source_url:
                 st.markdown(f"[Fuente original]({source_url})")
+
+
+def _display_camera_image(image_url: str, caption: str | None = None) -> None:
+    if not image_url:
+        st.info("No hay imagen disponible.")
+        return
+
+    try:
+        st.image(image_url, caption=caption, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"No se pudo renderizar la imagen: {exc}")
+    st.markdown(f"[Ver imagen original]({image_url})")
 
 
 def _display_rag_status(status: dict) -> None:
@@ -236,6 +263,17 @@ with tab_cameras:
         key="camera_search_only_with_image",
     )
 
+    if "camera_search_results" not in st.session_state:
+        try:
+            payload = get_json(
+                "/camaras/search",
+                params={"only_with_image": True, "limit": 5},
+            )
+            st.session_state["camera_search_results"] = payload["items"]
+            st.session_state["camera_search_count"] = payload["count"]
+        except requests.RequestException as exc:
+            st.warning(f"No se pudieron precargar camaras con imagen: {exc}")
+
     if st.button("Buscar camaras", use_container_width=True):
         params = {
             "q": camera_q.strip() or None,
@@ -253,6 +291,7 @@ with tab_cameras:
         try:
             payload = get_json("/camaras/search", params=params)
             st.session_state["camera_search_results"] = payload["items"]
+            st.session_state["camera_search_count"] = payload["count"]
             st.success(f"Camaras encontradas: {payload['count']}")
         except requests.RequestException as exc:
             st.error(f"No se pudieron buscar camaras: {exc}")
@@ -260,7 +299,13 @@ with tab_cameras:
     camera_search_results = st.session_state.get("camera_search_results", [])
     if camera_search_results:
         st.markdown("**Resultados de busqueda**")
+        st.caption(
+            f"Mostrando {len(camera_search_results)} de "
+            f"{st.session_state.get('camera_search_count', len(camera_search_results))} camaras encontradas."
+        )
         _display_camera_results(camera_search_results)
+    else:
+        st.info("No hay resultados de camaras procesadas para los filtros actuales.")
 
     if cameras:
         cameras = _sort_cameras_for_display(cameras)
@@ -274,10 +319,9 @@ with tab_cameras:
             ]
             selected_label = st.selectbox("Camara con imagen", labels)
             selected_camera = cameras_with_image[labels.index(selected_label)]
-            st.image(
-                selected_camera["image_url"],
+            _display_camera_image(
+                selected_camera.get("image_url", ""),
                 caption=selected_camera.get("nombre", ""),
-                use_container_width=True,
             )
         else:
             st.info("No se han encontrado camaras con image_url.")
