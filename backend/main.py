@@ -17,6 +17,7 @@ from src.sources.base import (
     summarize_by_source,
 )
 from src.sources.bilbao import fetch_bilbao_documents
+from src.sources.bluesky import fetch_bluesky_documents
 from src.sources.deia import fetch_deia_documents
 from src.trafikoa.cameras import get_cameras
 from src.trafikoa.camera_search import get_camera_by_id, search_cameras
@@ -61,6 +62,24 @@ def rebuild_corpus() -> dict[str, Any]:
         errors.append({"source": "DEIA", "error": str(exc)})
     save_raw_json(deia_raw, settings.raw_data_dir / "deia_raw.json")
     documents.extend(deia_documents)
+
+    try:
+        bluesky_documents, bluesky_raw = fetch_bluesky_documents()
+    except Exception as exc:
+        bluesky_documents = []
+        bluesky_raw = {
+            "source": "Bluesky",
+            "source_type": "social_media",
+            "status": "error",
+            "message": (
+                "No se pudo consultar Bluesky. Se conserva el corpus con las demas "
+                "fuentes disponibles."
+            ),
+            "error": str(exc),
+        }
+        errors.append({"source": "Bluesky", "error": str(exc)})
+    save_raw_json(bluesky_raw, settings.raw_data_dir / "bluesky_raw.json")
+    documents.extend(bluesky_documents)
 
     documents = deduplicate_documents(documents)
     save_corpus_csv(documents, settings.processed_data_dir / "corpus_movilidad.csv")

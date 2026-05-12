@@ -407,7 +407,11 @@ with tab_corpus:
             ]
         )
 
-        sources = sorted({item.get("source", "") for item in corpus_items if item.get("source")})
+        known_sources = {"Ayuntamiento de Bilbao", "DEIA", "Bluesky"}
+        sources = sorted(
+            known_sources
+            | {item.get("source", "") for item in corpus_items if item.get("source")}
+        )
         municipios = sorted(
             {item.get("municipio", "") for item in corpus_items if item.get("municipio")}
         )

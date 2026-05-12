@@ -14,7 +14,7 @@ El objetivo del proyecto es construir una base tecnica defendible para un chatbo
 - Guardar datos procesados en CSV.
 - Indexar textos en ChromaDB para el chatbot RAG.
 - Preguntar en lenguaje natural con un chatbot RAG usando Ollama local.
-- Construir un corpus multifuente inicial con avisos institucionales de movilidad.
+- Construir un corpus multifuente con avisos institucionales, noticias y una fuente social no estructurada.
 - Exponer la funcionalidad mediante FastAPI y Streamlit.
 
 ## Arquitectura General
@@ -36,7 +36,7 @@ Usuario
   -> Modulos src/trafikoa
   -> API Trafikoa/Open Data Euskadi
   -> Modulos src/sources
-  -> Fuentes externas institucionales
+  -> Fuentes externas institucionales, medios digitales y redes sociales
   -> data/raw y data/processed
   -> Respuesta al frontend
 ```
@@ -76,6 +76,8 @@ docs/                 Documentacion tecnica del proyecto
 | `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
 | `src/sources/base.py` | Define el esquema comun del corpus multifuente y utilidades de guardado. |
 | `src/sources/bilbao.py` | Extrae avisos de movilidad del Ayuntamiento de Bilbao. |
+| `src/sources/deia.py` | Extrae noticias de movilidad desde RSS oficial de DEIA. |
+| `src/sources/bluesky.py` | Busca posts de movilidad en Bluesky mediante API XRPC, con autenticacion opcional. |
 | `scripts/build_corpus.py` | Construye `data/processed/corpus_movilidad.csv` desde fuentes externas. |
 
 ## Requisitos
@@ -125,7 +127,7 @@ data/vectorstore
 
 ## Construir Corpus Multifuente
 
-Para descargar avisos institucionales de movilidad del Ayuntamiento de Bilbao y generar el corpus consolidado:
+Para descargar avisos institucionales, noticias de DEIA y posts de Bluesky si la API lo permite:
 
 ```powershell
 .venv\Scripts\python scripts\build_corpus.py
@@ -135,8 +137,12 @@ Archivos generados:
 
 ```text
 data/raw/bilbao_raw.json
+data/raw/deia_raw.json
+data/raw/bluesky_raw.json
 data/processed/corpus_movilidad.csv
 ```
+
+Bluesky puede requerir autenticacion para busqueda. Si quieres activarlo, configura `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`; si no, el script deja `bluesky_raw.json` con un estado claro y mantiene el corpus con las demas fuentes.
 
 ## Ejecutar Backend
 
@@ -190,7 +196,7 @@ http://127.0.0.1:8501
 | `POST` | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `POST` | `/chat` | Responde preguntas usando RAG y Ollama local. |
 | `GET` | `/corpus` | Devuelve documentos del corpus multifuente consolidado. |
-| `POST` | `/corpus/refresh` | Reconstruye el corpus multifuente desde el conector de Bilbao. |
+| `POST` | `/corpus/refresh` | Reconstruye el corpus multifuente desde Bilbao, DEIA y Bluesky. |
 
 ## Archivos Generados
 
@@ -203,6 +209,8 @@ http://127.0.0.1:8501
 | `data/raw/congestion_raw.json` | Respuesta original de flows/meters usada para congestion. |
 | `data/processed/congestion.csv` | Registros de congestion normalizados y preparados para RAG. |
 | `data/raw/bilbao_raw.json` | Avisos originales extraidos del Ayuntamiento de Bilbao. |
+| `data/raw/deia_raw.json` | Noticias extraidas desde RSS oficial de DEIA. |
+| `data/raw/bluesky_raw.json` | Posts recuperados de Bluesky o estado de autenticacion requerido. |
 | `data/processed/corpus_movilidad.csv` | Corpus multifuente consolidado con esquema comun. |
 | `data/vectorstore/` | Indice ChromaDB y estado TTL reconstruidos desde los CSV procesados. |
 
@@ -224,4 +232,4 @@ La clasificacion de congestion es una primera aproximacion por umbrales sobre `t
 
 El modulo RAG ya puede indexar `incidents.csv`, `cameras.csv` y `congestion.csv` en ChromaDB. El indice se refresca automaticamente por TTL cada 5 minutos cuando se consulta el RAG, y tambien puede reconstruirse manualmente con `POST /rag/refresh` o desde Streamlit. Para preguntas explicitas de camaras, el chatbot prioriza la busqueda estructurada en `data/processed/cameras.csv` para no perder URLs, coordenadas ni enlaces a mapa. Si Ollama no esta instalado o el modelo no esta descargado, el backend devuelve un error claro indicando que debe ejecutarse `ollama pull qwen2.5:3b`.
 
-Tambien se ha iniciado la consolidacion multifuente con un esquema comun en `src/sources/base.py` y un conector para avisos del Ayuntamiento de Bilbao en `src/sources/bilbao.py`. Esta primera fase genera `data/raw/bilbao_raw.json` y `data/processed/corpus_movilidad.csv`, pero todavia no indexa este corpus en el RAG para mantener separadas la validacion del dataset y la recuperacion semantica.
+Tambien se ha iniciado la consolidacion multifuente con un esquema comun en `src/sources/base.py`, conectores para Bilbao, DEIA y Bluesky, y salida en `data/processed/corpus_movilidad.csv`. Este corpus todavia no se indexa en el RAG para mantener separadas la validacion del dataset y la recuperacion semantica.

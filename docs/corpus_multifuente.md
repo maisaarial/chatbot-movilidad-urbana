@@ -2,147 +2,106 @@
 
 ## Objetivo
 
-El corpus multifuente amplia el proyecto mas alla de Trafikoa. Su finalidad es consolidar documentos textuales heterogeneos sobre movilidad urbana en un unico esquema comun, de forma que en fases posteriores puedan indexarse en el RAG junto con incidencias, camaras y congestion.
+El corpus multifuente amplia el proyecto mas alla de Trafikoa. Consolida documentos textuales heterogeneos sobre movilidad urbana en un esquema comun, de forma que puedan validarse como dataset antes de decidir su indexacion en el RAG.
 
-En esta primera fase solo se incorpora una fuente externa:
+Fuentes implementadas:
 
-| Fuente | Tipo | URL |
+| Fuente | Tipo | URL o API |
 |---|---|---|
-| Ayuntamiento de Bilbao | Web institucional | `https://www.bilbao.eus/cs/Satellite?cid=3000075232&language=es&pageid=3000075232&pagename=Bilbaonet%2FPage%2FBIO_ListadoAvisos` |
+| Ayuntamiento de Bilbao | `web_institucional` | `https://www.bilbao.eus/cs/Satellite?cid=3000075232&language=es&pageid=3000075232&pagename=Bilbaonet%2FPage%2FBIO_ListadoAvisos` |
+| DEIA | `medio_digital` | RSS oficial de DEIA, incluyendo `https://www.deia.eus/rss/section/1056166/` |
+| Bluesky | `social_media` | API XRPC `app.bsky.feed.searchPosts` |
 
-No se han implementado todavia DEIA, Bluesky ni Telegram.
+No se ha implementado Telegram.
 
-## Por Que Un Esquema Comun
-
-Cada fuente publica datos con estructuras distintas. Trafikoa usa una API estructurada, mientras que el Ayuntamiento de Bilbao publica avisos como HTML. Para poder mezclar fuentes sin acoplar el resto del sistema a cada formato original, se define un documento normalizado.
-
-El esquema comun permite:
-
-- Comparar documentos de fuentes diferentes.
-- Guardar todos los avisos en un CSV consolidado.
-- Evitar duplicados con una regla unica.
-- Preparar el campo `rag_text` para indexacion futura.
-- Mantener trazabilidad hacia la fuente original mediante `url` y `raw_text`.
-
-## Esquema De Documento
+## Esquema Comun
 
 | Campo | Descripcion |
 |---|---|
 | `id` | Identificador estable generado con hash de fuente, URL o texto. |
 | `timestamp` | Fecha publicada por la fuente, si existe. |
-| `source` | Nombre de la fuente, por ejemplo `Ayuntamiento de Bilbao`. |
-| `source_type` | Tipo de fuente, por ejemplo `web_institucional`. |
-| `title` | Titulo del aviso o documento. |
+| `source` | Nombre de la fuente: `Ayuntamiento de Bilbao`, `DEIA` o `Bluesky`. |
+| `source_type` | Tipo de fuente: institucional, medio digital o red social. |
+| `title` | Titulo del aviso, noticia o post. |
 | `text` | Texto principal limpio. |
-| `url` | Enlace al aviso original. |
-| `municipio` | Municipio asociado. En esta fuente: `Bilbao`. |
-| `provincia` | Provincia asociada. En esta fuente: `Bizkaia`. |
-| `carretera` | Carretera detectada si aparece de forma explicita, por ejemplo `A-8`. |
-| `tipo_evento` | Clasificacion inicial: `corte_trafico`, `obras`, `transporte` o `movilidad`. |
+| `url` | Enlace al documento original o post, si existe. |
+| `municipio` | Municipio detectado solo si aparece de forma explicita. |
+| `provincia` | Provincia detectada solo si aparece de forma explicita. |
+| `carretera` | Carretera detectada, por ejemplo `A-8` o `AP-8`. |
+| `tipo_evento` | Clasificacion inicial por reglas: `corte_trafico`, `obras`, `transporte`, `accidente`, `incidencia` o `movilidad`. |
 | `raw_text` | Texto base sin estructurar, conservado para trazabilidad. |
-| `rag_text` | Texto descriptivo preparado para indexacion posterior en RAG. |
+| `rag_text` | Texto descriptivo preparado para una futura indexacion. |
 
-Si un campo no puede extraerse de forma fiable, se deja vacio. No se inventan datos.
+Si un campo no puede extraerse de forma fiable, queda vacio. No se inventan datos.
 
-## Conector De Bilbao
+## Conectores
 
-El conector esta en:
+`src/sources/bilbao.py` descarga avisos HTML del Ayuntamiento, extrae fecha, titulo, resumen y URL, y filtra avisos de movilidad.
 
-```text
-src/sources/bilbao.py
-```
+`src/sources/deia.py` usa RSS oficial. Primero consulta el RSS de trafico de DEIA y despues secciones relacionadas como Bilbao, Bizkaia, Motor, Sociedad y Sucesos. Limpia HTML, filtra noticias por terminos de movilidad y evita falsos positivos evidentes como obras artisticas o cortes de agua sin afeccion viaria.
 
-Responsabilidades principales:
+`src/sources/bluesky.py` usa la API XRPC de Bluesky. Busca posts cortos con terminos como `trafico`, `A-8`, `AP-8`, `Bilbao`, `Bizkaia`, `Euskadi`, `retenciones`, `corte` o `carretera`. Si el endpoint exige autenticacion, no falla el corpus: guarda `data/raw/bluesky_raw.json` con `status=auth_required`. Puede activarse con `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`.
 
-- Descargar la pagina de avisos del Ayuntamiento de Bilbao.
-- Extraer fecha, titulo, resumen y URL de cada aviso.
-- Limpiar HTML y espacios innecesarios.
-- Filtrar avisos relacionados con movilidad, trafico, cortes, obras, aparcamiento, calzada o transporte.
-- Evitar que avisos no relacionados, como cortes de agua sin afeccion viaria, entren por palabras demasiado genericas.
-- Clasificar el `tipo_evento` con reglas simples por palabras clave.
-- Generar `rag_text`.
-- Lanzar un error claro si la estructura HTML cambia y no se detecta ningun aviso.
+## Institucional, Medio Y Red Social
 
-El conector usa `requests` y `HTMLParser` de la libreria estandar. No se ha introducido una dependencia adicional para scraping.
+Las fuentes institucionales tienden a ser mas estables y formales, con menos ruido y mayor trazabilidad. Un medio digital como DEIA aporta contexto narrativo, fechas, titulares y vocabulario periodistico. Bluesky representa texto informal: abreviaturas, mensajes breves, errores, duplicados, subjetividad y variabilidad linguistica.
+
+Esa variabilidad es util para PLN porque permite evaluar limpieza, normalizacion, filtrado semantico, deduplicacion y robustez frente a datos no estructurados. Tambien obliga a documentar calidad y procedencia, no solo cantidad de registros.
 
 ## Archivos Generados
 
-El script de construccion crea estos archivos:
-
 | Archivo | Contenido |
 |---|---|
-| `data/raw/bilbao_raw.json` | Avisos extraidos de la pagina original y resumen de la extraccion. |
+| `data/raw/bilbao_raw.json` | Avisos extraidos del Ayuntamiento de Bilbao. |
+| `data/raw/deia_raw.json` | Resumen de feeds RSS consultados e items extraidos de DEIA. |
+| `data/raw/bluesky_raw.json` | Resultado de busqueda Bluesky o motivo claro si requiere autenticacion. |
 | `data/processed/corpus_movilidad.csv` | Corpus consolidado con el esquema comun. |
 
-## Evitar Duplicados
-
-La deduplicacion se hace en `src/sources/base.py`.
-
-Regla aplicada:
-
-- Si el documento tiene `url`, se usa la URL como clave de duplicado.
-- Si no hay URL, se usa un hash del texto (`raw_text` o `text`).
-
-Esto permite incorporar fuentes futuras sin depender de un identificador propio de cada fuente.
-
-## Construccion Del Corpus
-
-Comando:
+## Construccion
 
 ```powershell
 .venv\Scripts\python scripts\build_corpus.py
 ```
 
-Resultado esperado:
+Resultado de referencia obtenido el 12/05/2026:
 
 ```text
-Corpus multifuente construido: total=8, by_source={'Ayuntamiento de Bilbao': 8}, processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=19, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA': 11}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
-El numero de documentos puede variar porque depende de los avisos publicados por el Ayuntamiento en el momento de la consulta.
+En esa ejecucion Bluesky genero `bluesky_raw.json`, pero no anadio filas al CSV porque la busqueda requiere autenticacion desde este entorno.
 
 ## Endpoints
 
 | Metodo | Endpoint | Descripcion |
 |---|---|---|
 | `GET` | `/corpus` | Devuelve documentos del corpus consolidado. |
-| `POST` | `/corpus/refresh` | Reconstruye el corpus ejecutando el conector de Bilbao. |
+| `POST` | `/corpus/refresh` | Reconstruye Bilbao, DEIA y Bluesky. |
 
-`GET /corpus` permite filtros opcionales:
+Filtros:
 
 ```powershell
-curl.exe "http://127.0.0.1:8000/corpus?source=Ayuntamiento%20de%20Bilbao"
+curl.exe "http://127.0.0.1:8000/corpus?source=DEIA"
+curl.exe "http://127.0.0.1:8000/corpus?source=Bluesky"
 curl.exe "http://127.0.0.1:8000/corpus?municipio=Bilbao"
-curl.exe "http://127.0.0.1:8000/corpus?tipo_evento=corte_trafico"
+curl.exe "http://127.0.0.1:8000/corpus?tipo_evento=transporte"
 ```
 
-## Integracion En Streamlit
+## Streamlit
 
-La interfaz incluye la pestana `Corpus multifuente`.
-
-Permite:
-
-- Ver la tabla consolidada.
-- Consultar conteo por fuente.
-- Filtrar por `source`.
-- Filtrar por `municipio`.
-- Filtrar por `tipo_evento`.
-- Ejecutar `POST /corpus/refresh` con el boton `Actualizar corpus`.
+La pestana `Corpus multifuente` muestra la tabla consolidada, conteo por fuente y filtros por `source`, `municipio` y `tipo_evento`. El selector de fuente incluye `Ayuntamiento de Bilbao`, `DEIA` y `Bluesky`, aunque Bluesky no tenga filas si la API no permite busqueda anonima.
 
 ## Relacion Con RAG
 
-En esta fase el corpus multifuente no se indexa todavia en ChromaDB. La decision es intencionada para separar dos pasos:
+El corpus multifuente no se indexa todavia en ChromaDB. La decision separa dos fases:
 
 1. Consolidar y validar el dataset multifuente.
-2. Integrarlo despues en el RAG cuando el formato este estable.
-
-El campo `rag_text` ya queda preparado para esa siguiente fase.
+2. Integrarlo despues en RAG cuando el formato y la calidad esten estabilizados.
 
 ## Limitaciones
 
-- La fuente de Bilbao es HTML, no una API JSON estable.
-- El parser depende de la estructura actual de la pagina.
-- Solo se procesa la pagina principal de avisos, no paginacion historica.
-- La clasificacion `tipo_evento` es una primera regla por palabras clave.
-- Algunos avisos institucionales pueden contener movilidad de forma indirecta y requerir revision manual.
-- Si la pagina cambia y no se detectan avisos, el sistema devuelve un error claro en vez de guardar datos vacios sin explicacion.
+- Bilbao y DEIA dependen de HTML/RSS vivos que pueden cambiar.
+- DEIA puede publicar dias sin noticias relevantes de trafico en el RSS especifico.
+- Bluesky puede exigir autenticacion para busqueda; sin credenciales se documenta `auth_required` y el corpus sigue funcionando.
+- Los posts sociales son ruidosos: pueden contener ironia, abreviaturas, duplicados, errores ortograficos o contexto insuficiente.
+- La clasificacion `tipo_evento` es una regla inicial por palabras clave, no un modelo supervisado.

@@ -167,7 +167,7 @@ Get-Item data\processed\congestion.csv
 
 ## Pruebas Del Corpus Multifuente
 
-Estas pruebas verifican la primera fase de integracion de fuentes externas. En esta fase solo se incorpora el conector del Ayuntamiento de Bilbao.
+Estas pruebas verifican la integracion de fuentes externas en el corpus comun: Ayuntamiento de Bilbao, DEIA y Bluesky. Bluesky se trata como fuente social no estructurada y no bloqueante.
 
 ### Construccion Del Corpus
 
@@ -180,26 +180,28 @@ Comando:
 Resultado obtenido:
 
 ```text
-Corpus multifuente construido: total=8, by_source={'Ayuntamiento de Bilbao': 8}, processed_path=data\processed\corpus_movilidad.csv
+Corpus multifuente construido: total=19, by_source={'Ayuntamiento de Bilbao': 8, 'DEIA': 11}, errors=[], processed_path=data\processed\corpus_movilidad.csv
 ```
 
 Estado: Paso.
 
-Nota: el numero de documentos puede cambiar porque la pagina de avisos del Ayuntamiento de Bilbao es una fuente viva.
+Nota: el numero de documentos puede cambiar porque Bilbao, DEIA y Bluesky son fuentes vivas. En esta ejecucion Bluesky no anadio filas porque la busqueda requiere autenticacion desde este entorno.
 
 ### Archivos Generados
 
 Comando:
 
 ```powershell
-Get-Item data\raw\bilbao_raw.json,data\processed\corpus_movilidad.csv | Select-Object Name,Length,LastWriteTime
+Get-Item data\raw\bilbao_raw.json,data\raw\deia_raw.json,data\raw\bluesky_raw.json,data\processed\corpus_movilidad.csv | Select-Object Name,Length,LastWriteTime
 ```
 
 Resultado obtenido:
 
 ```text
 bilbao_raw.json        8781 bytes
-corpus_movilidad.csv  12233 bytes
+deia_raw.json        106180 bytes
+bluesky_raw.json        800 bytes
+corpus_movilidad.csv  38625 bytes
 ```
 
 Estado: Paso.
@@ -209,21 +211,22 @@ Estado: Paso.
 Comando:
 
 ```powershell
-.venv\Scripts\python -c "import csv; rows=list(csv.DictReader(open('data/processed/corpus_movilidad.csv', encoding='utf-8'))); print('rows', len(rows)); print('roads', sorted({r['carretera'] for r in rows if r['carretera']})); print('sources', sorted({r['source'] for r in rows})); print('types', sorted({r['tipo_evento'] for r in rows}))"
+.venv\Scripts\python -c "import csv,json,pathlib; rows=list(csv.DictReader(open('data/processed/corpus_movilidad.csv', encoding='utf-8'))); print('rows', len(rows)); print('sources', sorted({r['source'] for r in rows})); print('by_source', {s: sum(1 for r in rows if r['source']==s) for s in sorted({r['source'] for r in rows})}); raw=json.loads(pathlib.Path('data/raw/bluesky_raw.json').read_text(encoding='utf-8')); print('bluesky_status', raw.get('status')); print('bluesky_posts', raw.get('mobility_items'))"
 ```
 
 Resultado obtenido:
 
 ```text
-rows 8
-roads []
-sources ['Ayuntamiento de Bilbao']
-types ['corte_trafico', 'obras']
+rows 19
+sources ['Ayuntamiento de Bilbao', 'DEIA']
+by_source {'Ayuntamiento de Bilbao': 8, 'DEIA': 11}
+bluesky_status auth_required
+bluesky_posts 0
 ```
 
 Interpretacion:
 
-El corpus contiene documentos reales del Ayuntamiento de Bilbao. No se detectaron carreteras explicitas en estos avisos, por lo que `carretera` queda vacio. Esto evita inventar valores a partir de expresiones como horas.
+El corpus contiene documentos reales del Ayuntamiento de Bilbao y DEIA. Bluesky genero `data/raw/bluesky_raw.json`, pero no aparece como `source=Bluesky` en el CSV porque la API de busqueda devolvio autenticacion requerida. El fallo queda documentado y no interrumpe la consolidacion.
 
 Estado: Paso.
 
@@ -241,7 +244,7 @@ $r = curl.exe -s --max-time 30 "http://127.0.0.1:8000/corpus" | ConvertFrom-Json
 Resultado obtenido:
 
 ```text
-count=8
+count=19
 first_source=Ayuntamiento de Bilbao
 first_tipo=corte_trafico
 ```
@@ -253,16 +256,20 @@ Estado: Paso.
 Comando:
 
 ```powershell
-$r = curl.exe -s --max-time 60 -X POST "http://127.0.0.1:8000/corpus/refresh" | ConvertFrom-Json
+$r = curl.exe -s --max-time 120 -X POST "http://127.0.0.1:8000/corpus/refresh" | ConvertFrom-Json
 "count=$($r.count)"
 "source_count=$($r.by_source.'Ayuntamiento de Bilbao')"
+"deia_count=$($r.by_source.DEIA)"
+"errors=$($r.errors.Count)"
 ```
 
 Resultado obtenido:
 
 ```text
-count=8
+count=19
 source_count=8
+deia_count=11
+errors=0
 ```
 
 Estado: Paso.
@@ -280,7 +287,7 @@ Resultado obtenido:
 
 ```text
 HTTP/1.1 200 OK
-El frontend contiene la pestana Corpus multifuente, el boton Actualizar corpus, filtros por source, municipio y tipo_evento, y llamadas a /corpus y /corpus/refresh.
+El frontend contiene la pestana Corpus multifuente, el boton Actualizar corpus, filtros por source, municipio y tipo_evento, llamadas a /corpus y /corpus/refresh, y el selector incluye Ayuntamiento de Bilbao, DEIA y Bluesky.
 ```
 
 Estado: Paso.
