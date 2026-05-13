@@ -972,3 +972,41 @@ tipo_evento=corte_trafico
 Interpretacion: recupera el aviso especifico del Ayuntamiento de Bilbao sobre el corte de dos carriles en Alameda Recalde.
 
 Estado: Paso.
+
+## Pruebas De Estilo De Respuesta
+
+Objetivo: comprobar que la respuesta principal se redacta de forma natural y que la metadata completa queda separada en `Fuentes usadas`.
+
+Comando:
+
+```powershell
+.venv\Scripts\python.exe -B -c "import os; os.environ['RAG_INDEX_TTL_SECONDS']='999999'; from src.rag.chatbot import answer_question; qs=['¿Hay cortes en Alameda Recalde?','¿Qué obras hay en Bizkaimove?','¿Hay incidencias en la BI-2405?','¿Hay congestión en la vía a Lekeitio desde Bilbao?']; forbidden=['Documento multifuente','Tipo de fuente','source_type','document_type']; [print('---', q, '\n', answer_question(q)['answer'], '\nforbidden=', [x for x in forbidden if x in answer_question(q)['answer']]) for q in qs]"
+```
+
+Resultados observados:
+
+```text
+¿Hay cortes en Alameda Recalde?
+Sí. El Ayuntamiento de Bilbao informa de un corte de dos carriles en Alameda Recalde, en sentido Plaza Moyúa. El aviso está fechado el 11 de mayo de 2026.
+forbidden=[]
+
+¿Qué obras hay en Bizkaimove?
+Bizkaimove recoge varias afecciones de obra o cortes. Entre ellas: un carril cortado en Sondika en la BI-30, un paso alternativo en Mallabia en la N-634, un sentido cortado en Bilbao en la BI-636, un carril cortado en Ermua en la N-634 y un arcén cortado en Galdakao en la N-634.
+forbidden=[]
+
+¿Hay incidencias en la BI-2405?
+Sí. En la BI-2405 se encontraron varias incidencias: registros de puerto de montaña sin causa detallada y un accidente por alcance en sentido Lekeitio, en Amoroto.
+forbidden=[]
+
+¿Hay congestión en la vía a Lekeitio desde Bilbao?
+No dispongo de cálculo de ruta completo para Bilbao - Lekeitio, pero encontré información relacionada.
+No encontré información específica para esa ubicación en las fuentes disponibles. Muestro solo coincidencias relacionadas, no una confirmación exacta.
+No encontré registros de congestión específicos para esa ubicación o ruta.
+Incidencias: Sí. En Bilbao - Lekeitio se encontró un accidente por alcance en sentido Lekeitio, en Amoroto.
+Obras/cortes: Sí. Bizkaimove informa de un paso alternativo en Amoroto en la BI-2405, en sentido Lekeitio - Plazakola. El aviso está fechado el 2026-05-13T10:18:43.216055+00:00.
+forbidden=[]
+```
+
+Interpretacion: la respuesta principal ya no repite `Documento multifuente`, `Tipo de fuente`, `source_type` ni `document_type`. Las fuentes completas, enlaces y metadata siguen disponibles en la seccion `Fuentes usadas` porque el endpoint conserva el array `sources`.
+
+Estado: Paso.

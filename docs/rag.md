@@ -291,18 +291,18 @@ Metadata completa: {"carretera": "A-8", "causa": "Salida", ...}
 Texto recuperado: id: 363423. timestamp: ...
 ```
 
-Para datos tabulares y documentos multifuente suficientemente claros, el chatbot genera una respuesta extractiva directamente desde la metadata recuperada. Esto evita respuestas genericas como "si, hay varias incidencias" y obliga a listar los campos concretos disponibles.
+Para datos tabulares y documentos multifuente suficientemente claros, el chatbot genera una respuesta redactada en lenguaje natural a partir de la metadata recuperada. La respuesta principal resume que ocurre, donde ocurre, carretera o calle, sentido, municipio y fecha cuando esos campos existen y aportan valor.
 
-Ejemplo de respuesta para incidencias:
+La respuesta principal no copia la metadata completa ni repite etiquetas internas como `document_type`, `source_type` o `Documento multifuente`. Esa trazabilidad queda separada en `Fuentes usadas`.
+
+Ejemplos de respuesta:
 
 ```text
-Si. Segun las fuentes recuperadas, se encontraron estas incidencias:
-1. Tipo: Accidente
-   Carretera: A-8
-   Causa: Salida
-   Sentido: Irun
-   Municipio/provincia: Bilbao / BIZKAIA
-   Fecha/hora: 2026-05-11T17:28
+Sí. El Ayuntamiento de Bilbao informa de un corte de dos carriles en Alameda Recalde, en sentido Plaza Moyúa. El aviso está fechado el 11 de mayo de 2026.
+
+Bizkaimove recoge varias afecciones de obra o cortes. Entre ellas: un carril cortado en Sondika en la BI-30, un paso alternativo en Mallabia en la N-634 y un sentido cortado en Bilbao en la BI-636.
+
+Sí. En la BI-2405 se encontraron varias incidencias: registros de puerto de montaña sin causa detallada y un accidente por alcance en sentido Lekeitio, en Amoroto.
 ```
 
 En el frontend, la pestaña `Chatbot` muestra las fuentes usadas con una etiqueta descriptiva. Para cada fuente se presenta:

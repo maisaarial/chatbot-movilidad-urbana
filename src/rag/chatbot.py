@@ -78,15 +78,15 @@ No uses conocimiento externo, suposiciones ni datos inventados.
 No respondas de forma generica si las fuentes contienen detalles concretos.
 Si el contexto no contiene evidencia suficiente para responder, responde exactamente:
 No encontré información suficiente en las fuentes disponibles.
-Cuando haya evidencia, enumera los elementos encontrados y cita sus campos disponibles.
+Cuando haya evidencia, redacta una respuesta natural y útil para el usuario.
 
 Reglas de contenido:
-- Para incidencias, incluye carretera, tipo, causa, sentido, municipio, provincia y timestamp.
-- Para congestion, incluye carretera o medidor, nivel de congestion, valor_trafico, unidad, municipio, provincia y timestamp.
-- Para camaras, incluye nombre, carretera, municipio, provincia e image_url o source_url.
-- Para corpus multifuente, menciona source, source_type, title, tipo_evento, timestamp y URL si existen.
-- Para Bluesky, indica que es una publicacion social y menciona el autor si esta disponible.
-- Si un campo solicitado no aparece en la fuente, escribe "no disponible" para ese campo.
+- No copies metadata completa ni menciones source_type, document_type o "Documento multifuente".
+- Para incidencias, resume que ocurre, carretera, causa, sentido, municipio y fecha si aportan valor.
+- Para congestion, resume nivel, medidor/carretera, municipio, valor y fecha si aportan valor.
+- Para camaras, resume nombre, carretera, municipio y enlace solo si es necesario.
+- Para avisos, obras o cortes, resume fuente, afeccion, calle/carretera, sentido, municipio y fecha si aportan valor.
+- Si un campo solicitado no aparece en la fuente, no lo presentes como si existiera.
 - No digas solo "si, hay varias"; debes listar cuales son.
 - Mantente fiel a las fuentes recuperadas y no agregues explicaciones externas.
 """
@@ -355,96 +355,240 @@ def _build_structured_answer(
     retrieval: dict[str, Any],
 ) -> str:
     lines = _answer_caveats(query_context, retrieval, results)
-    lines.append("Encontré estos elementos en las fuentes disponibles:")
-
     groups = _group_results_by_type(results)
-    for title in ["Incidencias", "Obras/cortes", "Congestión", "Cámaras", "Corpus multifuente"]:
+
+    summaries = []
+    for title, formatter in [
+        ("Incidencias", _summarize_incidents),
+        ("Obras/cortes", _summarize_works_or_closures),
+        ("Congestión", _summarize_congestion),
+        ("Cámaras", _summarize_cameras),
+        ("Avisos/noticias", _summarize_notices),
+    ]:
         group_results = groups.get(title, [])
         if not group_results:
             continue
-        lines.append("")
-        lines.append(f"{title}:")
-        for index, result in enumerate(group_results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(_format_structured_result(index, metadata))
+        summary = formatter(group_results, query_context)
+        if summary:
+            summaries.append((title, summary))
+
+    if not summaries:
+        lines.append(NO_EVIDENCE_MESSAGE)
+    elif len(summaries) == 1:
+        lines.append(summaries[0][1])
+    else:
+        for title, summary in summaries:
+            lines.append(f"{title}: {summary}")
 
     return "\n".join(lines).strip()
 
-def _format_structured_result(index: int, metadata: dict[str, Any]) -> list[str]:
-    document_type = metadata.get("document_type")
-    if document_type == "incidencia":
-        return [
-            f"{index}. Fuente: {_field(metadata, 'source')}",
-            f"   Tipo: {_field(metadata, 'tipo')}",
-            f"   Carretera: {_field(metadata, 'carretera')}",
-            f"   Causa: {_field(metadata, 'causa')}",
-            f"   Sentido: {_field(metadata, 'sentido')}",
-            (
-                "   Municipio/provincia: "
-                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-            ),
-            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-        ]
 
-    if document_type == "congestion":
-        return [
-            f"{index}. Fuente: {_field(metadata, 'source')}",
-            f"   Nivel: {_field(metadata, 'congestion')}",
-            f"   Carretera o medidor: {_field(metadata, 'carretera')}",
-            (
-                "   Valor de trafico: "
-                f"{_field(metadata, 'valor_trafico')} {_field(metadata, 'unidad')}"
-            ),
-            (
-                "   Municipio/provincia: "
-                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-            ),
-            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-        ]
+def _summarize_incidents(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+) -> str:
+    phrases = _unique_phrases(
+        _incident_phrase(result.get("metadata", {})) for result in results
+    )
+    if not phrases:
+        return ""
 
-    if document_type == "camara":
-        return [
-            f"{index}. Fuente: {_field(metadata, 'source')}",
-            f"   Nombre: {_field(metadata, 'nombre')}",
-            f"   Carretera: {_field(metadata, 'carretera')}",
-            (
-                "   Municipio/provincia: "
-                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-            ),
-            f"   Image URL: {_field(metadata, 'image_url')}",
-            f"   Source URL: {_field(metadata, 'source_url')}",
-        ]
+    location = _query_location_label(query_context) or _result_location_label(
+        results[0].get("metadata", {})
+    )
+    prefix = "Sí."
+    if location:
+        if query_context.carreteras and location == query_context.carreteras[0]:
+            prefix += f" En la {location} se "
+        else:
+            prefix += f" En {location} se "
+    else:
+        prefix += " Se "
 
-    if document_type == CORPUS_DOCUMENT_TYPE:
-        source = _field(metadata, "source")
-        prefix = "Publicacion social" if source == "Bluesky" else "Documento multifuente"
-        lines = [
-            f"{index}. {prefix}: {source}",
-            f"   Tipo de fuente: {_field(metadata, 'source_type')}",
-            f"   Titulo: {_field(metadata, 'title')}",
-            f"   Tipo de evento: {_field(metadata, 'tipo_evento')}",
-            (
-                "   Municipio/provincia: "
-                f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-            ),
-            f"   Carretera: {_field(metadata, 'carretera')}",
-            f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-            f"   URL: {_field(metadata, 'url')}",
-        ]
-        if source == "Bluesky":
-            lines.insert(3, f"   Autor: {_field(metadata, 'author')}")
-        return lines
+    if len(phrases) == 1:
+        return f"{prefix}encontró {phrases[0]}."
+    return f"{prefix}encontraron varias incidencias: {_join_phrases(phrases)}."
 
-    return [
-        f"{index}. Fuente: {_field(metadata, 'source')}",
-        f"   Tipo: {_field(metadata, 'tipo')}",
-        f"   Carretera: {_field(metadata, 'carretera')}",
-        (
-            "   Municipio/provincia: "
-            f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-        ),
-        f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-    ]
+
+def _incident_phrase(metadata: dict[str, Any]) -> str:
+    incident_type = _clean_value(metadata.get("tipo"))
+    cause = _clean_value(metadata.get("causa"))
+    sense = _clean_value(metadata.get("sentido"))
+    municipality = _clean_value(metadata.get("municipio"))
+    road = _clean_value(metadata.get("carretera"))
+
+    if incident_type and "puerto" in _normalize(incident_type):
+        phrase = "registros de puerto de montaña"
+    elif incident_type:
+        phrase = f"{_article_for(incident_type)} {_lower_first(incident_type)}"
+    else:
+        phrase = "una incidencia"
+
+    details = []
+    if cause and _normalize(cause) not in {"desconocida", "desconocido"}:
+        details.append(f"por {_lower_first(cause)}")
+    elif incident_type and "puerto" in _normalize(incident_type):
+        details.append("sin causa detallada")
+    if sense:
+        details.append(f"en sentido {_title_like(sense)}")
+    if municipality:
+        details.append(f", en {_title_like(municipality)}" if sense else f"en {_title_like(municipality)}")
+    elif road and "puerto" not in _normalize(incident_type or ""):
+        details.append(f"en la {road}")
+
+    return " ".join([phrase] + details).replace(" ,", ",")
+
+
+def _summarize_works_or_closures(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+) -> str:
+    phrases = _unique_phrases(
+        _work_or_closure_phrase(result.get("metadata", {}), query_context)
+        for result in results
+    )
+    if not phrases:
+        return ""
+
+    first_metadata = results[0].get("metadata", {})
+    source = _clean_value(first_metadata.get("source") or first_metadata.get("fuente"))
+    timestamp = _clean_value(first_metadata.get("timestamp"))
+
+    if len(phrases) == 1:
+        source_text = f"{_source_subject(source)} informa de " if source else "Se informa de "
+        answer = f"Sí. {source_text}{phrases[0]}."
+        if timestamp:
+            answer += f" El aviso está fechado el {timestamp}."
+        return answer
+
+    source_name = "Bizkaimove" if source == "DEIA - Bizkaimove" else source
+    if source_name:
+        return (
+            f"{source_name} recoge varias afecciones de obra o cortes. "
+            f"Entre ellas: {_join_phrases(phrases)}."
+        )
+    return f"Se encontraron varias afecciones de obra o cortes: {_join_phrases(phrases)}."
+
+
+def _work_or_closure_phrase(
+    metadata: dict[str, Any],
+    query_context: QueryUnderstanding,
+) -> str:
+    title = _clean_value(metadata.get("title"))
+    event_type = _clean_value(metadata.get("tipo_evento") or metadata.get("tipo"))
+    municipality = _clean_value(metadata.get("municipio"))
+    road = _clean_value(metadata.get("carretera"))
+    text = _clean_value(metadata.get("text"))
+
+    event = _event_label_from_title(title) or _event_label_from_type(event_type)
+    place = _place_from_query_or_title(query_context, title, text)
+    sense = _sense_from_title(title) or _sense_from_text(text)
+
+    phrase = event
+    if place:
+        phrase += f" en {place}"
+    elif municipality:
+        phrase += f" en {_title_like(municipality)}"
+    if road:
+        phrase += f" en la {road}"
+    if sense and _is_single_specific_request(query_context):
+        phrase += f", en sentido {_title_like(sense)}"
+
+    return phrase
+
+
+def _summarize_congestion(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+) -> str:
+    phrases = _unique_phrases(
+        _congestion_phrase(result.get("metadata", {})) for result in results
+    )
+    if not phrases:
+        return ""
+
+    location = _query_location_label(query_context)
+    if len(phrases) == 1:
+        if location:
+            return f"Sí. Para {location} se encontró {phrases[0]}."
+        return f"Sí. Se encontró {phrases[0]}."
+    if location:
+        return f"Para {location} se encontraron varios registros de congestión: {_join_phrases(phrases)}."
+    return f"Se encontraron varios registros de congestión: {_join_phrases(phrases)}."
+
+
+def _congestion_phrase(metadata: dict[str, Any]) -> str:
+    level = _clean_value(metadata.get("congestion"))
+    road = _clean_value(metadata.get("carretera"))
+    municipality = _clean_value(metadata.get("municipio"))
+    value = _clean_value(metadata.get("valor_trafico"))
+    unit = _clean_value(metadata.get("unidad"))
+    timestamp = _clean_value(metadata.get("timestamp"))
+
+    phrase = f"congestión {level}" if level else "un registro de congestión"
+    details = []
+    if road:
+        details.append(f"en {road}")
+    if municipality:
+        details.append(f"en {_title_like(municipality)}")
+    if value and unit:
+        details.append(f"con {value} {unit}")
+    if timestamp:
+        details.append(f"el {timestamp}")
+    return " ".join([phrase] + details)
+
+
+def _summarize_cameras(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+) -> str:
+    phrases = _unique_phrases(
+        _camera_phrase(result.get("metadata", {})) for result in results
+    )
+    if not phrases:
+        return ""
+    location = _query_location_label(query_context)
+    if location:
+        return f"Se encontraron cámaras relacionadas con {location}: {_join_phrases(phrases)}."
+    return f"Se encontraron cámaras: {_join_phrases(phrases)}."
+
+
+def _camera_phrase(metadata: dict[str, Any]) -> str:
+    name = _clean_value(metadata.get("nombre")) or "cámara"
+    road = _clean_value(metadata.get("carretera"))
+    municipality = _clean_value(metadata.get("municipio"))
+    details = []
+    if road:
+        details.append(f"en la {road}")
+    if municipality:
+        details.append(f"en {_title_like(municipality)}")
+    return " ".join([name] + details)
+
+
+def _summarize_notices(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+) -> str:
+    phrases = _unique_phrases(
+        _notice_phrase(result.get("metadata", {})) for result in results
+    )
+    if not phrases:
+        return ""
+    if len(phrases) == 1:
+        return f"También aparece este aviso: {phrases[0]}."
+    return f"También aparecen estos avisos o noticias: {_join_phrases(phrases)}."
+
+
+def _notice_phrase(metadata: dict[str, Any]) -> str:
+    title = _clean_value(metadata.get("title"))
+    municipality = _clean_value(metadata.get("municipio"))
+    timestamp = _clean_value(metadata.get("timestamp"))
+    parts = [title or "aviso de movilidad"]
+    if municipality:
+        parts.append(f"en {_title_like(municipality)}")
+    if timestamp:
+        parts.append(f"fechado el {timestamp}")
+    return ", ".join(parts)
 
 
 def _answer_caveats(
@@ -505,7 +649,7 @@ def _group_results_by_type(results: list[dict[str, Any]]) -> dict[str, list[dict
         "Obras/cortes": [],
         "Congestión": [],
         "Cámaras": [],
-        "Corpus multifuente": [],
+        "Avisos/noticias": [],
     }
     for result in results:
         metadata = result.get("metadata", {})
@@ -519,7 +663,7 @@ def _group_results_by_type(results: list[dict[str, Any]]) -> dict[str, list[dict
         elif document_type == CORPUS_DOCUMENT_TYPE and _is_works_or_closure(metadata):
             groups["Obras/cortes"].append(result)
         elif document_type == CORPUS_DOCUMENT_TYPE:
-            groups["Corpus multifuente"].append(result)
+            groups["Avisos/noticias"].append(result)
     return groups
 
 
@@ -541,6 +685,187 @@ def _has_document_type(results: list[dict[str, Any]], document_type: str) -> boo
         result.get("metadata", {}).get("document_type") == document_type
         for result in results
     )
+
+
+def _clean_value(value: Any) -> str:
+    if value is None:
+        return ""
+    clean = str(value).strip()
+    if not clean:
+        return ""
+    normalized = _normalize(clean)
+    unavailable_values = {
+        "no disponible",
+        "none",
+        "null",
+        "nan",
+        "sin datos",
+        "no data",
+    }
+    if normalized in unavailable_values:
+        return ""
+    return clean
+
+
+def _query_location_label(query_context: QueryUnderstanding) -> str:
+    if query_context.carreteras:
+        return query_context.carreteras[0]
+    if query_context.is_route and query_context.route_from and query_context.route_to:
+        return f"{query_context.route_from} - {query_context.route_to}"
+    if query_context.lugares:
+        return " y ".join(query_context.lugares[:2])
+    return ""
+
+
+def _result_location_label(metadata: dict[str, Any]) -> str:
+    road = _clean_value(metadata.get("carretera"))
+    municipality = _clean_value(metadata.get("municipio"))
+    if road:
+        return road
+    return _title_like(municipality) if municipality else ""
+
+
+def _event_label_from_title(title: str) -> str:
+    normalized_title = _normalize(title)
+    if "corte de dos carriles" in normalized_title:
+        return "un corte de dos carriles"
+    if "un carril cortado" in normalized_title:
+        return "un carril cortado"
+    if "sentido cortado" in normalized_title:
+        return "un sentido cortado"
+    if "arcen cortado" in normalized_title:
+        return "un arcén cortado"
+    if "paso alternativo" in normalized_title:
+        return "un paso alternativo"
+    if "ocupacion" in normalized_title and "aparcamiento" in normalized_title:
+        return "una ocupación de aparcamiento"
+    if "ocupacion" in normalized_title and "calzada" in normalized_title:
+        return "una ocupación de calzada"
+    if "corte" in normalized_title:
+        return "un corte de tráfico"
+    if "obra" in normalized_title:
+        return "una obra"
+    return ""
+
+
+def _event_label_from_type(event_type: str) -> str:
+    normalized_type = _normalize(event_type)
+    if normalized_type == "paso_alternativo":
+        return "un paso alternativo"
+    if normalized_type in {"corte_carril", "corte_trafico"}:
+        return "un corte de tráfico"
+    if normalized_type == "obras":
+        return "una obra"
+    if event_type:
+        return f"una afección de {_lower_first(event_type.replace('_', ' '))}"
+    return "una afección de tráfico"
+
+
+def _place_from_query_or_title(
+    query_context: QueryUnderstanding,
+    title: str,
+    text: str,
+) -> str:
+    normalized_title = _normalize(title)
+    normalized_text = _normalize(text)
+    for place in query_context.lugares:
+        if _normalize(place) in normalized_title:
+            return place
+
+    parenthesized = re.search(r"\(([^)]+)\)", title)
+    if parenthesized:
+        return _title_like(parenthesized.group(1))
+
+    street_match = re.search(
+        r"\b(?:en|de)\s+(alameda|calle|avenida|travesía|travesia)\s+([^,.]+)",
+        title,
+        flags=re.IGNORECASE,
+    )
+    if street_match:
+        return _title_like(" ".join(street_match.groups()))
+
+    for place in query_context.lugares:
+        if _normalize(place) in normalized_text:
+            return place
+
+    return ""
+
+
+def _sense_from_title(title: str) -> str:
+    if _normalize(title).startswith("sentido cortado"):
+        return ""
+    match = re.search(r"\bsentido\s+([^,.]+)", title, flags=re.IGNORECASE)
+    if not match:
+        return ""
+    return match.group(1).strip()
+
+
+def _sense_from_text(text: str) -> str:
+    match = re.search(r"\bsentido[:\s]+([^,.]+)", text, flags=re.IGNORECASE)
+    if not match:
+        return ""
+    return match.group(1).strip()
+
+
+def _unique_phrases(phrases: Any) -> list[str]:
+    unique = []
+    seen = set()
+    for phrase in phrases:
+        if not phrase:
+            continue
+        normalized = _normalize(phrase)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        unique.append(phrase)
+    return unique
+
+
+def _join_phrases(phrases: list[str], limit: int = 5) -> str:
+    selected = phrases[:limit]
+    if len(phrases) > limit:
+        selected.append("otras afecciones relacionadas")
+    if not selected:
+        return ""
+    if len(selected) == 1:
+        return selected[0]
+    if len(selected) == 2:
+        return f"{selected[0]} y {selected[1]}"
+    return f"{', '.join(selected[:-1])} y {selected[-1]}"
+
+
+def _article_for(value: str) -> str:
+    normalized = _normalize(value)
+    if normalized.endswith("a") or normalized in {"averia", "incidencia"}:
+        return "una"
+    return "un"
+
+
+def _lower_first(value: str) -> str:
+    if not value:
+        return ""
+    return value[:1].lower() + value[1:]
+
+
+def _title_like(value: str) -> str:
+    if not value:
+        return ""
+    clean = " ".join(str(value).split())
+    if clean.isupper():
+        return clean.title()
+    return clean[:1].upper() + clean[1:]
+
+
+def _source_subject(source: str) -> str:
+    if source == "Ayuntamiento de Bilbao":
+        return "El Ayuntamiento de Bilbao"
+    if source == "DEIA - Bizkaimove":
+        return "Bizkaimove"
+    return source
+
+
+def _is_single_specific_request(query_context: QueryUnderstanding) -> bool:
+    return bool(query_context.lugares or query_context.carreteras)
 
 
 def _no_results_message(query_context: QueryUnderstanding) -> str:
