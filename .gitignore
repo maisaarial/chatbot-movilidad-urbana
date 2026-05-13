@@ -19,5 +19,7 @@ data/vectorstore/*
 .mypy_cache/
 .ruff_cache/
 
+yolov*.pt
+
 .DS_Store
 Thumbs.db

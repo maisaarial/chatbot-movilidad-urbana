@@ -61,6 +61,111 @@ alta
 
 Estado: Paso.
 
+## Pruebas De Vision Por Computador
+
+Objetivo: verificar que el modulo de vision queda separado del RAG textual, que los endpoints devuelven una salida estructurada y que el sistema no afirma accidentes con certeza.
+
+Nota: las camaras analizadas son imagenes vivas. El numero de detecciones, la etiqueta y el nivel de riesgo pueden variar entre ejecuciones aunque el codigo sea el mismo.
+
+### Analisis Directo De Camara Con Imagen
+
+Comando:
+
+```powershell
+.venv\Scripts\python.exe -B -c "from backend.main import VisionAnalyzeRequest, vision_analyze_camera; r=vision_analyze_camera(VisionAnalyzeRequest(camera_id='77')); print({k:r.get(k) for k in ['camera_id','camera_name','risk_level','label','confidence','model_status','reason']}); print('detections', len(r.get('detections', [])))"
+```
+
+Resultado obtenido en este entorno en una ejecucion:
+
+```text
+camera_id=77
+camera_name=CCTV 300 - Cámara DOMO nudo Kukularra
+risk_level=bajo
+label=sin_indicios
+confidence=0.32
+model_status=ok
+reason=Sin indicios visuales claros de accidente o anomalia en esta imagen.
+detections=7
+```
+
+Interpretacion: el endpoint descarga la imagen real de la camara, carga YOLOv8n y devuelve detecciones de objetos. En esta captura la clasificacion mantiene `sin_indicios` porque las reglas no encuentran evidencia visual suficiente para marcar posible anomalia o posible accidente.
+
+Estado: Paso.
+
+### Analisis Por URL De Imagen Real
+
+Comando:
+
+```powershell
+.venv\Scripts\python.exe -B -c "from backend.main import VisionAnalyzeRequest, vision_analyze_camera; r=vision_analyze_camera(VisionAnalyzeRequest(image_url='http://www.bizkaimove.com/camaras/cam1.jpg')); print({k:r.get(k) for k in ['image_url','risk_level','label','confidence','model_status','reason']}); print('detections', len(r.get('detections', [])))"
+```
+
+Resultado obtenido:
+
+```text
+image_url=http://www.bizkaimove.com/camaras/cam1.jpg
+risk_level=bajo
+label=sin_indicios
+confidence=0.32
+model_status=ok
+detections=7
+```
+
+Estado: Paso.
+
+### Muestra De Camaras
+
+Comando:
+
+```powershell
+.venv\Scripts\python.exe -B -c "from backend.main import vision_analyze_sample; r=vision_analyze_sample(limit=2); print(r['count']); print([(item.get('model_status'), item.get('label'), len(item.get('detections', []))) for item in r['items']])"
+```
+
+Resultado en una ejecucion:
+
+```text
+2
+[('ok', 'sin_indicios', 7), ('ok', 'posible_anomalia', 15)]
+```
+
+Estado: Paso.
+
+### Chatbot Con Pregunta Visual
+
+Comando:
+
+```powershell
+.venv\Scripts\python.exe -B -c "from src.rag.chatbot import answer_question; p=answer_question('Analiza la cámara 77'); print(p['answer']); print('sources', len(p.get('sources', [])))"
+```
+
+Resultado:
+
+```text
+El analisis visual preliminar de CCTV 300 - Cámara DOMO nudo Kukularra no muestra indicios visuales claros de accidente. Nivel de riesgo: bajo. Sin indicios visuales claros de accidente o anomalia en esta imagen. Objetos detectados: 7. Este analisis no confirma accidentes oficialmente.
+sources 1
+```
+
+Estado: Paso.
+
+### Regresion De Camaras Y Chat RAG
+
+Comandos:
+
+```powershell
+.venv\Scripts\python.exe -B -c "from backend.main import camara_detail; c=camara_detail('77'); print(c['id'], bool(c.get('image_url')))"
+.venv\Scripts\python.exe -B -c "from src.rag.chatbot import answer_question; p=answer_question('¿Hay cortes en Alameda Recalde?'); print(p['answer']); print('sources', len(p.get('sources', [])))"
+```
+
+Resultado:
+
+```text
+77 True
+Sí. El Ayuntamiento de Bilbao informa de un corte de dos carriles en Alameda Recalde, en sentido Plaza Moyúa. El aviso está fechado el 11 de mayo de 2026.
+sources 1
+```
+
+Estado: Paso.
+
 ### Endpoint De Congestion Con Datos Reales
 
 Comando:

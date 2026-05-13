@@ -24,6 +24,7 @@ from src.trafikoa.camera_search import get_camera_by_id, search_cameras
 from src.trafikoa.client import TrafikoaAPIError, TrafikoaClient
 from src.trafikoa.congestion import get_congestion_records
 from src.trafikoa.incidents import get_current_incidents
+from src.vision.accident_detector import analyze_camera_image
 
 app = FastAPI(
     title="Chatbot Movilidad Urbana",
@@ -36,6 +37,11 @@ trafikoa_client = TrafikoaClient.from_env()
 
 class ChatRequest(BaseModel):
     question: str
+
+
+class VisionAnalyzeRequest(BaseModel):
+    camera_id: str | None = None
+    image_url: str | None = None
 
 
 def rebuild_corpus() -> dict[str, Any]:
@@ -170,6 +176,45 @@ def camara_detail(camera_id: str) -> dict[str, Any]:
     if camera is None:
         raise HTTPException(status_code=404, detail="Camara no encontrada.")
     return camera
+
+
+@app.post("/vision/analyze-camera")
+def vision_analyze_camera(request: VisionAnalyzeRequest) -> dict[str, Any]:
+    camera = None
+    image_url = (request.image_url or "").strip()
+
+    if request.camera_id:
+        camera = get_camera_by_id(request.camera_id)
+        if camera is None:
+            raise HTTPException(status_code=404, detail="Camara no encontrada.")
+        image_url = image_url or str(camera.get("image_url") or "").strip()
+
+    if not image_url:
+        raise HTTPException(
+            status_code=400,
+            detail="Debes enviar camera_id de una camara con imagen o image_url.",
+        )
+
+    return analyze_camera_image(image_url=image_url, camera_metadata=camera)
+
+
+@app.get("/vision/analyze-sample")
+def vision_analyze_sample(
+    limit: int = Query(5, ge=1, le=10, description="Numero de camaras a analizar."),
+) -> dict[str, Any]:
+    cameras_with_image = search_cameras(
+        limit=limit,
+        only_with_image=True,
+    )
+    results = [
+        analyze_camera_image(
+            image_url=str(camera.get("image_url") or ""),
+            camera_metadata=camera,
+        )
+        for camera in cameras_with_image
+        if camera.get("image_url")
+    ]
+    return {"count": len(results), "items": results}
 
 
 @app.get("/corpus")

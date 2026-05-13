@@ -13,7 +13,8 @@ from src.rag.query_understanding import (
     understand_query,
 )
 from src.rag.retriever import retrieve_with_diagnostics
-from src.trafikoa.camera_search import normalize_text, search_cameras
+from src.trafikoa.camera_search import get_camera_by_id, normalize_text, search_cameras
+from src.vision.accident_detector import analyze_camera_image
 
 NO_EVIDENCE_MESSAGE = "No encontré información suficiente en las fuentes disponibles."
 NO_CAMERA_MESSAGE = "No encontré cámaras para ese lugar o carretera en las fuentes disponibles."
@@ -72,6 +73,7 @@ CAMERA_QUERY_STOPWORDS = {
     "un",
 }
 CORPUS_DOCUMENT_TYPE = "corpus_multifuente"
+IMAGE_URL_PATTERN = re.compile(r"https?://\S+", re.IGNORECASE)
 
 SYSTEM_PROMPT = """
 Eres un asistente de movilidad urbana. Responde SOLO usando el contexto recuperado.
@@ -100,6 +102,10 @@ def answer_question(question: str, k: int | None = None) -> dict[str, Any]:
 
     if is_capabilities_question(question):
         return {"answer": build_capabilities_answer(question), "sources": []}
+
+    visual_answer = _answer_visual_question(question)
+    if visual_answer is not None:
+        return visual_answer
 
     query_context = understand_query(question)
     debug_payload = {"query_understanding": query_context.to_dict()}
@@ -192,6 +198,158 @@ def _answer_camera_question(
     return {
         "answer": _build_camera_answer(cameras, only_without_image=only_without_image),
         "sources": [_camera_to_source(camera) for camera in cameras],
+    }
+
+
+def _answer_visual_question(question: str) -> dict[str, Any] | None:
+    normalized_question = normalize_text(question)
+    if not _is_visual_analysis_question(normalized_question):
+        return None
+
+    image_url = _extract_image_url(question)
+    if image_url:
+        analysis = analyze_camera_image(image_url=image_url)
+        return {
+            "answer": _build_visual_answer(analysis),
+            "sources": [_vision_source(analysis)],
+        }
+
+    camera_id = _extract_camera_id(normalized_question)
+    if camera_id:
+        camera = get_camera_by_id(camera_id)
+        if camera and camera.get("image_url"):
+            analysis = analyze_camera_image(
+                image_url=str(camera["image_url"]),
+                camera_metadata=camera,
+            )
+            return {
+                "answer": _build_visual_answer(analysis),
+                "sources": [_vision_source(analysis)],
+            }
+        return {
+            "answer": (
+                "Puedo hacer un analisis visual preliminar, pero esa camara no "
+                "existe o no tiene imagen disponible. Indica otra camara, un "
+                "municipio, una carretera o una URL de imagen."
+            ),
+            "sources": [],
+        }
+
+    camera_filters = _camera_filters_from_question(
+        question,
+        understand_query(question),
+    )
+    cameras = search_cameras(
+        q=camera_filters.get("q"),
+        municipio=camera_filters.get("municipio"),
+        carretera=camera_filters.get("carretera"),
+        provincia=camera_filters.get("provincia"),
+        limit=1,
+        only_with_image=True,
+    )
+    if cameras:
+        camera = cameras[0]
+        analysis = analyze_camera_image(
+            image_url=str(camera["image_url"]),
+            camera_metadata=camera,
+        )
+        return {
+            "answer": _build_visual_answer(analysis),
+            "sources": [_vision_source(analysis)],
+        }
+
+    return {
+        "answer": (
+            "Puedo hacer analisis visual preliminar de camaras con imagen, pero "
+            "necesito que indiques una camara concreta, un municipio, una "
+            "carretera o una URL de imagen."
+        ),
+        "sources": [],
+    }
+
+
+def _is_visual_analysis_question(normalized_question: str) -> bool:
+    has_camera_context = any(
+        term in normalized_question
+        for term in ["camara", "camaras", "camera", "cctv", "imagen"]
+    )
+    has_visual_action = any(
+        term in normalized_question
+        for term in ["analiza", "analizar", "ves", "ver", "vision", "visual"]
+    )
+    has_visual_risk = any(
+        term in normalized_question
+        for term in ["anomalia", "anomalias", "accidente", "accidentes"]
+    )
+    return (has_camera_context and (has_visual_action or has_visual_risk)) or (
+        "anomalia visual" in normalized_question
+        or "anomalias visuales" in normalized_question
+    )
+
+
+def _extract_image_url(question: str) -> str | None:
+    match = IMAGE_URL_PATTERN.search(question)
+    if not match:
+        return None
+    return match.group(0).rstrip(").,;")
+
+
+def _extract_camera_id(normalized_question: str) -> str | None:
+    match = re.search(r"\b(?:camara|camera|cctv)\s+(\d+)\b", normalized_question)
+    if not match:
+        return None
+    return match.group(1)
+
+
+def _build_visual_answer(analysis: dict[str, Any]) -> str:
+    camera_name = analysis.get("camera_name") or analysis.get("camera_id") or "la camara"
+    label = analysis.get("label")
+    risk = analysis.get("risk_level")
+    reason = analysis.get("reason") or "sin detalle disponible"
+    detection_count = len(analysis.get("detections") or [])
+    if analysis.get("model_status") in {"unavailable", "error"}:
+        return (
+            f"No puedo completar el analisis visual preliminar de {camera_name}. "
+            f"{reason} Este flujo no confirma accidentes oficialmente."
+        )
+    if label == "posible_accidente":
+        intro = (
+            f"El analisis visual preliminar de {camera_name} marca un posible "
+            "accidente."
+        )
+    elif label == "posible_anomalia":
+        intro = (
+            f"El analisis visual preliminar de {camera_name} marca una posible "
+            "anomalia visual."
+        )
+    else:
+        intro = (
+            f"El analisis visual preliminar de {camera_name} no muestra indicios "
+            "visuales claros de accidente."
+        )
+    return (
+        f"{intro} Nivel de riesgo: {risk}. {reason} "
+        f"Objetos detectados: {detection_count}. "
+        "Este analisis no confirma accidentes oficialmente."
+    )
+
+
+def _vision_source(analysis: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "text": analysis.get("reason", ""),
+        "score": analysis.get("confidence"),
+        "distance": None,
+        "metadata": {
+            "document_type": "vision_analysis",
+            "source": "Vision por computador",
+            "camera_id": analysis.get("camera_id"),
+            "camera_name": analysis.get("camera_name"),
+            "image_url": analysis.get("image_url"),
+            "risk_level": analysis.get("risk_level"),
+            "label": analysis.get("label"),
+            "confidence": analysis.get("confidence"),
+            "timestamp": analysis.get("timestamp"),
+        },
     }
 
 

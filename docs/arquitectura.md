@@ -10,6 +10,7 @@ La idea principal es que cada capa tenga una responsabilidad clara:
 - FastAPI expone endpoints limpios y controlados.
 - Los modulos de `src/` consultan Trafikoa, normalizan datos y calculan resultados.
 - Los modulos de `src/sources/` incorporan fuentes textuales externas en un corpus comun.
+- El modulo `src/vision/` analiza imagenes de camaras de forma preliminar.
 - Los datos originales y procesados se guardan en `data/`.
 
 ## Flujo General Del Sistema
@@ -34,6 +35,8 @@ Normalizacion y calculo
   |
   +--> src/sources/* --> fuentes externas institucionales
   |
+  +--> src/vision/* --> analisis visual preliminar de camaras
+  |
   +--> data/raw/*.json
   |
   +--> data/processed/*.csv
@@ -55,6 +58,7 @@ Sus responsabilidades son:
 - Permitir descargar incidencias reales.
 - Permitir descargar camaras reales.
 - Permitir seleccionar camaras con `image_url` y visualizar la imagen.
+- Permitir analizar una imagen de camara con vision por computador de forma preliminar.
 - Mostrar registros de congestion.
 - Filtrar congestion por carretera y nivel.
 - Mostrar resumen de conteo por nivel.
@@ -87,6 +91,8 @@ Endpoints principales:
 | `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
 | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
 | `/chat` | Responde preguntas con RAG y Ollama local. |
+| `/vision/analyze-camera` | Analiza una camara o URL de imagen con vision por computador. |
+| `/vision/analyze-sample` | Analiza una muestra de camaras con imagen. |
 | `/corpus` | Devuelve documentos del corpus multifuente consolidado. |
 | `/corpus/refresh` | Reconstruye el corpus multifuente desde fuentes externas. |
 
@@ -113,6 +119,7 @@ Los modulos de procesamiento estan separados por dominio:
 | `src/trafikoa/incidents.py` | Incidencias de trafico. |
 | `src/trafikoa/cameras.py` | Camaras de trafico. |
 | `src/trafikoa/congestion.py` | Flujos y medidores para congestion. |
+| `src/vision/accident_detector.py` | Deteccion de objetos en imagenes de camaras y reglas de riesgo visual. |
 
 Cada modulo descarga datos reales, conserva una copia original y genera una version procesada.
 
@@ -186,3 +193,23 @@ Pregunta del usuario
 ```
 
 El RAG usa los CSV de Trafikoa ya consolidados (`incidents.csv`, `cameras.csv` y `congestion.csv`) y tambien `corpus_movilidad.csv` con fuentes heterogeneas: Ayuntamiento de Bilbao, DEIA - Bizkaimove y Bluesky.
+
+## Vision Por Computador
+
+La vision por computador esta separada del RAG textual en `src/vision/`.
+
+```text
+Imagen de camara
+  -> src/vision/accident_detector.py
+  -> descarga de imagen
+  -> YOLO preentrenado si esta disponible
+  -> detecciones de objetos relevantes
+  -> reglas heuristicas de riesgo visual
+  -> alerta preliminar
+```
+
+El detector trabaja con clases generales como `car`, `truck`, `bus`, `motorcycle`, `person` y `bicycle`. No se ha entrenado un modelo especifico de accidentes, por lo que el sistema solo emite etiquetas prudentes: `sin_indicios`, `posible_anomalia` o `posible_accidente`.
+
+El endpoint `/vision/analyze-camera` permite analizar una camara por `camera_id` o una imagen por `image_url`. El endpoint `/vision/analyze-sample` analiza una muestra de camaras con imagen. Streamlit muestra el resultado en la pestana `Camaras` y en la pestana `Vision`.
+
+Esta funcionalidad no sube imagenes a APIs pagas y no sustituye fuentes oficiales ni revision humana.

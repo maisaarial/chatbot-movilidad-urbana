@@ -9,6 +9,7 @@ El objetivo del proyecto es construir una base tecnica defendible para un chatbo
 - Consultar incidencias reales de Trafikoa.
 - Consultar camaras reales de trafico.
 - Buscar camaras por lenguaje natural, carretera, municipio o provincia.
+- Analizar imagenes de camaras con vision por computador de forma preliminar.
 - Descargar mediciones reales de flujo de trafico.
 - Clasificar congestion en baja, media o alta.
 - Guardar datos procesados en CSV.
@@ -75,6 +76,7 @@ docs/                 Documentacion tecnica del proyecto
 | `src/rag/capabilities.py` | Responde preguntas sobre capacidades, fuentes y limitaciones del chatbot. |
 | `src/rag/ollama_client.py` | Cliente HTTP para Ollama local. |
 | `src/rag/chatbot.py` | Orquesta retrieve, prompt y respuesta del LLM local. |
+| `src/vision/accident_detector.py` | Analiza imagenes de camaras con YOLO opcional y reglas heuristicas. |
 | `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
 | `scripts/evaluate_retrieval.py` | Evalua retrieval con Recall@k y MRR aproximados. |
 | `scripts/evaluate_chatbot.py` | Evalua respuestas finales y fuentes usadas. |
@@ -162,6 +164,21 @@ data/processed/corpus_movilidad.csv
 
 Bluesky requiere autenticacion para leer el timeline de cuentas seguidas. Si configuras `BLUESKY_HANDLE` y `BLUESKY_APP_PASSWORD`, el conector consulta la API XRPC autenticada, lee los ultimos posts del timeline y filtra textos en espanol/euskera con senal de movilidad y contexto Euskadi/Bizkaia/Bilbao. La busqueda global queda solo como fallback opcional. Si no hay credenciales o la API restringe la consulta, el script deja `bluesky_raw.json` con un estado claro y mantiene el corpus con las demas fuentes.
 
+## Vision Por Computador
+
+El modulo `src/vision/accident_detector.py` permite analizar imagenes de camaras con un modelo preentrenado de Ultralytics si esta disponible. La salida es siempre preliminar: usa etiquetas como `posible_anomalia` o `posible_accidente`, pero no confirma accidentes oficialmente.
+
+La deteccion se basa en objetos como coches, camiones, autobuses, motos, personas y bicicletas, y reglas heuristicas sobre acumulacion o proximidad. No se ha entrenado un detector especifico de accidentes por falta de dataset anotado.
+
+Endpoints:
+
+| Metodo | Endpoint | Funcion |
+|---|---|---|
+| `POST` | `/vision/analyze-camera` | Analiza una camara por `camera_id` o una imagen por `image_url`. |
+| `GET` | `/vision/analyze-sample` | Analiza una muestra de camaras con imagen. |
+
+Mas detalle en [docs/vision.md](docs/vision.md).
+
 ## Evaluar El Sistema
 
 La evaluacion usa una muestra pequena anotada manualmente en:
@@ -236,6 +253,8 @@ http://127.0.0.1:8501
 | `GET` | `/rag/search` | Busca documentos indexados. |
 | `GET` | `/rag/status` | Devuelve estado, edad y TTL del indice RAG. |
 | `POST` | `/rag/refresh` | Reconstruye manualmente el indice RAG. |
+| `POST` | `/vision/analyze-camera` | Analiza imagen de camara con vision por computador. |
+| `GET` | `/vision/analyze-sample` | Analiza una muestra de camaras con imagen. |
 | `POST` | `/chat` | Responde preguntas usando RAG y Ollama local. |
 | `GET` | `/corpus` | Devuelve documentos del corpus multifuente consolidado. |
 | `POST` | `/corpus/refresh` | Reconstruye el corpus multifuente desde Bilbao, DEIA - Bizkaimove y Bluesky. |
@@ -262,6 +281,7 @@ http://127.0.0.1:8501
 - [API Trafikoa](docs/trafikoa_api.md)
 - [Calculo de Congestion](docs/congestion.md)
 - [RAG y Ollama](docs/rag.md)
+- [Vision por computador](docs/vision.md)
 - [Corpus Multifuente](docs/corpus_multifuente.md)
 - [Evaluacion](docs/evaluacion.md)
 - [Pruebas](docs/pruebas.md)

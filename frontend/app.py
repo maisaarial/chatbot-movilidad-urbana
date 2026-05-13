@@ -13,8 +13,24 @@ st.caption("Primera version funcional para consultar Trafikoa y probar RAG.")
 
 api_url = st.sidebar.text_input("Backend URL", value=settings.backend_url)
 
-tab_incidents, tab_cameras, tab_congestion, tab_chatbot, tab_corpus, tab_rag = st.tabs(
-    ["Incidencias", "Camaras", "Congestion", "Chatbot", "Corpus multifuente", "RAG"]
+(
+    tab_incidents,
+    tab_cameras,
+    tab_congestion,
+    tab_chatbot,
+    tab_corpus,
+    tab_rag,
+    tab_vision,
+) = st.tabs(
+    [
+        "Incidencias",
+        "Camaras",
+        "Congestion",
+        "Chatbot",
+        "Corpus multifuente",
+        "RAG",
+        "Vision",
+    ]
 )
 
 
@@ -190,6 +206,72 @@ def _display_camera_image(image_url: str, caption: str | None = None) -> None:
     st.markdown(f"[Ver imagen original]({image_url})")
 
 
+def _display_vision_result(result: dict) -> None:
+    st.warning(
+        "Analisis preliminar: no confirma accidentes oficialmente. "
+        "Debe revisarse con fuentes operativas y criterio humano."
+    )
+    risk_col, label_col, confidence_col = st.columns(3)
+    risk_col.metric("Riesgo", result.get("risk_level", "no disponible"))
+    label_col.metric("Etiqueta", result.get("label", "no disponible"))
+    confidence = result.get("confidence")
+    confidence_col.metric(
+        "Confianza",
+        "n/d" if confidence is None else f"{float(confidence):.2f}",
+    )
+    reason = result.get("reason")
+    if reason:
+        st.write(reason)
+
+    detections = result.get("detections") or []
+    if detections:
+        st.markdown("**Objetos detectados**")
+        _display_detection_summary(detections)
+    else:
+        st.info("No se detectaron objetos relevantes en la imagen.")
+
+    image_url = result.get("image_url")
+    if image_url:
+        _display_camera_image(image_url, caption=result.get("camera_name"))
+
+
+def _display_detection_summary(detections: list[dict]) -> None:
+    counts = Counter(
+        detection.get("class_name")
+        for detection in detections
+        if detection.get("class_name")
+    )
+    vehicle_total = sum(
+        counts.get(class_name, 0)
+        for class_name in ("car", "truck", "bus", "motorcycle")
+    )
+
+    lines = [
+        _count_label(vehicle_total, "vehiculo", "vehiculos"),
+        _count_label(counts.get("car", 0), "coche", "coches"),
+    ]
+    for class_name, singular, plural in [
+        ("truck", "camion", "camiones"),
+        ("bus", "autobus", "autobuses"),
+        ("motorcycle", "motocicleta", "motocicletas"),
+        ("bicycle", "bicicleta", "bicicletas"),
+    ]:
+        count = counts.get(class_name, 0)
+        if count:
+            lines.append(_count_label(count, singular, plural))
+
+    lines.append(_count_label(counts.get("person", 0), "persona", "personas"))
+    st.markdown("\n".join(lines))
+
+    if counts.get("person", 0):
+        st.warning("Atencion: se detectaron personas en la escena.")
+
+
+def _count_label(count: int, singular: str, plural: str) -> str:
+    label = singular if count == 1 else plural
+    return f"- {count} {label}"
+
+
 def _display_rag_status(status: dict) -> None:
     col_docs, col_age, col_ttl, col_state = st.columns(4)
     col_docs.metric("Documentos", status.get("documents_indexed", 0))
@@ -323,6 +405,24 @@ with tab_cameras:
                 selected_camera.get("image_url", ""),
                 caption=selected_camera.get("nombre", ""),
             )
+            if st.button("Analizar imagen con vision", use_container_width=True):
+                try:
+                    payload = post_json(
+                        "/vision/analyze-camera",
+                        {"camera_id": selected_camera.get("id")},
+                    )
+                    st.session_state["camera_vision_result"] = payload
+                except requests.RequestException as exc:
+                    st.error(f"No se pudo analizar la imagen: {exc}")
+
+            vision_result = st.session_state.get("camera_vision_result")
+            if (
+                vision_result
+                and str(vision_result.get("camera_id") or "")
+                == str(selected_camera.get("id") or "")
+            ):
+                st.markdown("**Analisis visual**")
+                _display_vision_result(vision_result)
         else:
             st.info("No se han encontrado camaras con image_url.")
     else:
@@ -536,3 +636,84 @@ with tab_rag:
             st.dataframe(payload["results"], use_container_width=True)
         except requests.RequestException as exc:
             st.error(f"No se pudo ejecutar la busqueda: {exc}")
+
+with tab_vision:
+    st.subheader("Vision por computador")
+    st.warning(
+        "Analisis preliminar: detecta objetos y posibles anomalias visuales, "
+        "pero no confirma accidentes oficialmente."
+    )
+
+    if st.button("Cargar camaras con imagen", use_container_width=True):
+        try:
+            payload = get_json(
+                "/camaras/search",
+                params={"only_with_image": True, "limit": 25},
+            )
+            st.session_state["vision_cameras"] = payload.get("items", [])
+        except requests.RequestException as exc:
+            st.error(f"No se pudieron cargar camaras con imagen: {exc}")
+
+    if "vision_cameras" not in st.session_state:
+        try:
+            payload = get_json(
+                "/camaras/search",
+                params={"only_with_image": True, "limit": 10},
+            )
+            st.session_state["vision_cameras"] = payload.get("items", [])
+        except requests.RequestException:
+            st.session_state["vision_cameras"] = []
+
+    vision_cameras = st.session_state.get("vision_cameras", [])
+    if vision_cameras:
+        labels = [
+            " | ".join(
+                str(value)
+                for value in [
+                    camera.get("id"),
+                    camera.get("nombre"),
+                    camera.get("carretera"),
+                    camera.get("municipio"),
+                ]
+                if value
+            )
+            for camera in vision_cameras
+        ]
+        selected_label = st.selectbox("Camara", labels, key="vision_camera_select")
+        selected_camera = vision_cameras[labels.index(selected_label)]
+        _display_camera_image(
+            selected_camera.get("image_url", ""),
+            caption=selected_camera.get("nombre", ""),
+        )
+
+        if st.button("Analizar camara seleccionada", use_container_width=True):
+            try:
+                payload = post_json(
+                    "/vision/analyze-camera",
+                    {"camera_id": selected_camera.get("id")},
+                )
+                st.session_state["vision_result"] = payload
+            except requests.RequestException as exc:
+                st.error(f"No se pudo analizar la camara: {exc}")
+
+        result = st.session_state.get("vision_result")
+        if result:
+            _display_vision_result(result)
+    else:
+        st.info("No hay camaras con imagen cargadas para analizar.")
+
+    st.markdown("**Analizar URL de imagen**")
+    custom_image_url = st.text_input("Image URL", key="vision_custom_image_url")
+    if st.button("Analizar URL", use_container_width=True):
+        try:
+            payload = post_json(
+                "/vision/analyze-camera",
+                {"image_url": custom_image_url.strip()},
+            )
+            st.session_state["vision_custom_result"] = payload
+        except requests.RequestException as exc:
+            st.error(f"No se pudo analizar la URL: {exc}")
+
+    custom_result = st.session_state.get("vision_custom_result")
+    if custom_result:
+        _display_vision_result(custom_result)
