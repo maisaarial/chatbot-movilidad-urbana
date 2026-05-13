@@ -4,6 +4,7 @@ import unicodedata
 from typing import Any
 
 from src.config import settings
+from src.rag.capabilities import build_capabilities_answer, is_capabilities_question
 from src.rag.ollama_client import OllamaClient
 from src.rag.query_understanding import (
     INTENT_CAMARAS,
@@ -96,6 +97,9 @@ def answer_question(question: str, k: int | None = None) -> dict[str, Any]:
     question = question.strip()
     if not question:
         return {"answer": NO_EVIDENCE_MESSAGE, "sources": []}
+
+    if is_capabilities_question(question):
+        return {"answer": build_capabilities_answer(question), "sources": []}
 
     query_context = understand_query(question)
     debug_payload = {"query_understanding": query_context.to_dict()}

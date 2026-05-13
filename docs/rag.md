@@ -15,6 +15,7 @@ No se usan APIs pagas. No se usa OpenAI API. El modelo generativo se ejecuta loc
 | Vector store | `src/rag/vector_store.py` | Gestiona ChromaDB y embeddings locales. |
 | Gestor de indice | `src/rag/index_manager.py` | Controla TTL, estado y refresco automatico del indice. |
 | Retriever | `src/rag/retriever.py` | Recupera documentos relevantes para una consulta. |
+| Capacidades | `src/rag/capabilities.py` | Responde preguntas sobre que sabe el sistema y que fuentes usa. |
 | Buscador de camaras | `src/trafikoa/camera_search.py` | Busca camaras reales con filtros estructurados. |
 | Cliente Ollama | `src/rag/ollama_client.py` | Llama al endpoint local de Ollama. |
 | Chatbot | `src/rag/chatbot.py` | Construye contexto, prompt y respuesta final. |
@@ -192,6 +193,36 @@ El retriever usa esa interpretacion para construir filtros preferentes:
 El retrieval aumenta los candidatos iniciales a 20 como minimo y despues aplica reranking local. Suma puntuacion cuando coinciden carretera, lugar, intent/document_type o fuente preferida. Resta puntuacion a camaras si la pregunta no pide camaras, a congestion de Bilbao cuando se pregunta por otra ubicacion y a documentos que no contienen ninguna entidad detectada.
 
 Si no hay coincidencias con filtros estrictos, se usa fallback semantico. En ese caso la respuesta avisa que no hay coincidencia exacta y solo muestra informacion relacionada.
+
+## Autodescripcion Del Sistema
+
+Antes de ejecutar el RAG normal, el chatbot detecta preguntas de capacidades o introspeccion con reglas simples en:
+
+```text
+src/rag/capabilities.py
+```
+
+Ejemplos:
+
+```text
+Que sabes?
+Sobre que te puedo preguntar?
+Que fuentes de informacion tienes?
+De donde sale la informacion?
+Que datos usas?
+Puedes calcular rutas?
+```
+
+Estas preguntas se responden directamente, sin retrieval semantico y sin llamar a Ollama. La respuesta describe las fuentes reales del sistema:
+
+- Trafikoa: incidencias, camaras y datos de congestion basados en `flows`/`meters`.
+- Ayuntamiento de Bilbao: avisos institucionales de movilidad, cortes, obras y ocupaciones.
+- DEIA - Bizkaimove: informacion avanzada de trafico, obras, cortes y pasos alternativos.
+- Bluesky: publicaciones de cuentas seguidas relacionadas con movilidad/trafico, solo si hay credenciales y posts relevantes.
+- ChromaDB/RAG: indice semantico local sobre documentos procesados.
+- Ollama/Qwen: generacion local sin APIs pagas.
+
+La respuesta consulta `src/rag/index_manager.py` para incorporar, si esta disponible, el numero de documentos indexados, tipos de documentos y fecha de ultima actualizacion. Tambien explica limitaciones: no calcula rutas completas, no hace predicciones oficiales y solo responde con fuentes disponibles.
 
 ## Busqueda Estructurada De Camaras
 

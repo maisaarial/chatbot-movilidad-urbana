@@ -72,6 +72,7 @@ docs/                 Documentacion tecnica del proyecto
 | `src/rag/vector_store.py` | Vector store inicial con ChromaDB. |
 | `src/rag/indexer.py` | Construye el indice RAG desde CSV procesados. |
 | `src/rag/retriever.py` | Recupera documentos relevantes desde ChromaDB. |
+| `src/rag/capabilities.py` | Responde preguntas sobre capacidades, fuentes y limitaciones del chatbot. |
 | `src/rag/ollama_client.py` | Cliente HTTP para Ollama local. |
 | `src/rag/chatbot.py` | Orquesta retrieve, prompt y respuesta del LLM local. |
 | `scripts/build_rag_index.py` | Script para reconstruir el indice RAG. |
@@ -127,6 +128,20 @@ El indice se guarda en:
 ```text
 data/vectorstore
 ```
+
+## Autodescripcion Del Chatbot
+
+El endpoint `/chat` reconoce preguntas como:
+
+```text
+Que sabes?
+Sobre que te puedo preguntar?
+Que fuentes de informacion tienes?
+De donde sale la informacion?
+Puedes calcular rutas?
+```
+
+Para estas preguntas responde directamente con una descripcion controlada del sistema, sin llamar a Ollama ni ejecutar el retrieval semantico. La respuesta menciona las fuentes disponibles: Trafikoa, Ayuntamiento de Bilbao, DEIA - Bizkaimove, Bluesky si hay credenciales y posts, ChromaDB/RAG y Ollama local. Tambien incorpora el estado del indice cuando esta disponible y aclara limitaciones como no calcular rutas completas ni inventar informacion fuera de las fuentes.
 
 ## Construir Corpus Multifuente
 

@@ -143,6 +143,18 @@ $body = @{ question = "Hay incidencias en la A-8?" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
 ```
 
+Preguntas de autodescripcion:
+
+```powershell
+$body = @{ question = "Sobre que te puedo preguntar?" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+
+$body = @{ question = "Que fuentes de informacion tienes?" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/chat" -Body $body -ContentType "application/json"
+```
+
+Estas preguntas no llaman al RAG semantico ni a Ollama. El chatbot responde con una descripcion controlada de fuentes, estado del indice y limitaciones, incluyendo que no calcula rutas completas.
+
 Ejemplos de chat para camaras:
 
 ```powershell
