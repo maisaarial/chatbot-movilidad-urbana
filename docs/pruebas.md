@@ -861,3 +861,114 @@ ollama pull qwen2.5:3b
 ```
 
 Estado: implementado en `src/rag/ollama_client.py` y expuesto por `backend/main.py`.
+
+## Pruebas De Query Understanding, Filtrado Y Reranking
+
+Objetivo: comprobar que el chatbot interpreta intencion y entidades antes del LLM, evita mezclar camaras cuando no se pidieron y avisa cuando no hay coincidencia exacta.
+
+Comando usado en modo directo, sin forzar refresco del indice:
+
+```powershell
+.venv\Scripts\python.exe -B -c "import os; os.environ['RAG_INDEX_TTL_SECONDS']='999999'; from src.rag.chatbot import answer_question; import json; qs=['Lekeitio','¿Hay congestión en la vía a Lekeitio desde Bilbao?','¿Hay incidencias en la BI-2405?','¿Qué obras hay en Bizkaimove?','Muéstrame cámaras en Bilbao','¿Hay cortes en Alameda Recalde?']; print(json.dumps([answer_question(q) for q in qs], ensure_ascii=False, indent=2))"
+```
+
+### `Lekeitio`
+
+Resultado observado:
+
+```text
+intent=general
+lugares=[Lekeitio]
+sources=2
+tipos=incidencia, corpus_multifuente
+carreteras=BI-2405
+```
+
+Interpretacion: prioriza la incidencia de BI-2405 con sentido Lekeitio y el documento de DEIA - Bizkaimove en Amoroto. No mezcla camaras ni congestion de Bilbao.
+
+Estado: Paso.
+
+### `¿Hay congestión en la vía a Lekeitio desde Bilbao?`
+
+Resultado observado:
+
+```text
+intent=congestion
+is_route=true
+route_from=Bilbao
+route_to=Lekeitio
+fallback_used=true
+strict_result_count=0
+sources=2
+tipos=incidencia, corpus_multifuente
+carreteras=BI-2405
+```
+
+La respuesta empieza indicando que no hay calculo de ruta completo y que no se encontraron registros de congestion especificos para esa ruta. Despues muestra solo informacion relacionada con Lekeitio/BI-2405.
+
+Estado: Paso.
+
+### `¿Hay incidencias en la BI-2405?`
+
+Resultado observado:
+
+```text
+intent=incidencias
+carreteras=[BI-2405]
+fallback_used=false
+strict_result_count=3
+tipos=incidencia
+```
+
+Interpretacion: recupera incidencias de BI-2405, incluyendo la incidencia de Amoroto sentido Lekeitio.
+
+Estado: Paso.
+
+### `¿Qué obras hay en Bizkaimove?`
+
+Resultado observado:
+
+```text
+intent=obras_cortes
+source_preference=DEIA - Bizkaimove
+fallback_used=false
+tipos=corpus_multifuente
+source=DEIA - Bizkaimove
+```
+
+Interpretacion: prioriza el corpus multifuente de DEIA - Bizkaimove y no mezcla camaras.
+
+Estado: Paso.
+
+### `Muéstrame cámaras en Bilbao`
+
+Resultado observado:
+
+```text
+intent=camaras
+lugares=[Bilbao]
+flujo=busqueda estructurada de camaras
+sources=10
+tipos=camara
+```
+
+Interpretacion: mantiene la busqueda estructurada de camaras y devuelve imagenes/mapas reales del CSV procesado.
+
+Estado: Paso.
+
+### `¿Hay cortes en Alameda Recalde?`
+
+Resultado observado:
+
+```text
+intent=obras_cortes
+lugares=[Alameda Recalde]
+fallback_used=false
+strict_result_count=1
+source=Ayuntamiento de Bilbao
+tipo_evento=corte_trafico
+```
+
+Interpretacion: recupera el aviso especifico del Ayuntamiento de Bilbao sobre el corte de dos carriles en Alameda Recalde.
+
+Estado: Paso.

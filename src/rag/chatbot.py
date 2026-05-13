@@ -5,11 +5,24 @@ from typing import Any
 
 from src.config import settings
 from src.rag.ollama_client import OllamaClient
-from src.rag.retriever import retrieve
+from src.rag.query_understanding import (
+    INTENT_CAMARAS,
+    INTENT_CONGESTION,
+    QueryUnderstanding,
+    understand_query,
+)
+from src.rag.retriever import retrieve_with_diagnostics
 from src.trafikoa.camera_search import normalize_text, search_cameras
 
 NO_EVIDENCE_MESSAGE = "No encontré información suficiente en las fuentes disponibles."
 NO_CAMERA_MESSAGE = "No encontré cámaras para ese lugar o carretera en las fuentes disponibles."
+NO_SPECIFIC_LOCATION_MESSAGE = (
+    "No encontré información específica para esa ubicación en las fuentes disponibles."
+)
+ROUTE_LIMITATION_MESSAGE = (
+    "No dispongo de cálculo de ruta completo, pero encontré información relacionada "
+    "con las entidades de la pregunta."
+)
 
 CAMERA_ROAD_PATTERN = re.compile(r"\b(?:a|ap|bi|gi|n)-\s*\d+[a-z]?\b", re.IGNORECASE)
 CAMERA_INTENT_TERMS = {
@@ -58,12 +71,6 @@ CAMERA_QUERY_STOPWORDS = {
     "un",
 }
 CORPUS_DOCUMENT_TYPE = "corpus_multifuente"
-CORPUS_SOURCE_ALIASES = {
-    "ayuntamiento de bilbao": "Ayuntamiento de Bilbao",
-    "deia": "DEIA - Bizkaimove",
-    "bizkaimove": "DEIA - Bizkaimove",
-    "bluesky": "Bluesky",
-}
 
 SYSTEM_PROMPT = """
 Eres un asistente de movilidad urbana. Responde SOLO usando el contexto recuperado.
@@ -90,39 +97,71 @@ def answer_question(question: str, k: int | None = None) -> dict[str, Any]:
     if not question:
         return {"answer": NO_EVIDENCE_MESSAGE, "sources": []}
 
-    camera_answer = _answer_camera_question(question)
+    query_context = understand_query(question)
+    debug_payload = {"query_understanding": query_context.to_dict()}
+
+    camera_answer = _answer_camera_question(question, query_context)
     if camera_answer is not None:
+        camera_answer.update(debug_payload)
         return camera_answer
 
-    results = retrieve(question, k or settings.rag_top_k)
+    retrieval = retrieve_with_diagnostics(
+        question,
+        k or settings.rag_top_k,
+        query_understanding=query_context,
+        candidate_k=20,
+    )
+    results = retrieval["results"]
     useful_results = [result for result in results if result.get("text")]
     if not useful_results:
-        return {"answer": NO_EVIDENCE_MESSAGE, "sources": []}
+        return {
+            "answer": _no_results_message(query_context),
+            "sources": [],
+            **debug_payload,
+            "retrieval": _retrieval_debug(retrieval),
+        }
 
-    structured_results = _select_structured_results(question, useful_results)
+    structured_results = _select_structured_results(query_context, useful_results)
     if structured_results:
         return {
-            "answer": _build_structured_answer(structured_results),
+            "answer": _build_structured_answer(
+                structured_results,
+                query_context=query_context,
+                retrieval=retrieval,
+            ),
             "sources": _sources_from_results(structured_results),
+            **debug_payload,
+            "retrieval": _retrieval_debug(retrieval),
         }
 
     context = _build_context(useful_results)
     prompt = _build_prompt(question, context)
     answer = OllamaClient().generate(prompt=prompt, system=SYSTEM_PROMPT)
     if _is_no_evidence_answer(answer):
-        return {"answer": NO_EVIDENCE_MESSAGE, "sources": []}
+        return {
+            "answer": _no_results_message(query_context),
+            "sources": [],
+            **debug_payload,
+            "retrieval": _retrieval_debug(retrieval),
+        }
 
+    answer = _prepend_caveats(answer, query_context, retrieval)
     return {
         "answer": answer,
         "sources": _sources_from_results(useful_results),
+        **debug_payload,
+        "retrieval": _retrieval_debug(retrieval),
     }
 
 
-def _answer_camera_question(question: str) -> dict[str, Any] | None:
-    if not _is_camera_intent(question):
+def _answer_camera_question(
+    question: str,
+    query_context: QueryUnderstanding,
+) -> dict[str, Any] | None:
+    if not _is_camera_intent(question, query_context):
         return None
 
-    filters = _camera_filters_from_question(question)
+    filters = _camera_filters_from_question(question, query_context)
     cameras = search_cameras(
         q=filters.get("q"),
         municipio=filters.get("municipio"),
@@ -152,7 +191,10 @@ def _answer_camera_question(question: str) -> dict[str, Any] | None:
     }
 
 
-def _is_camera_intent(question: str) -> bool:
+def _is_camera_intent(question: str, query_context: QueryUnderstanding) -> bool:
+    if query_context.intent == INTENT_CAMARAS:
+        return True
+
     normalized_question = normalize_text(question)
     terms = set(normalized_question.split())
     if terms & CAMERA_INTENT_TERMS:
@@ -165,11 +207,16 @@ def _is_camera_intent(question: str) -> bool:
     return has_show_verb and has_road
 
 
-def _camera_filters_from_question(question: str) -> dict[str, str | None]:
+def _camera_filters_from_question(
+    question: str,
+    query_context: QueryUnderstanding,
+) -> dict[str, str | None]:
     normalized_question = normalize_text(question)
-    road = _extract_camera_road(normalized_question)
+    road = query_context.carreteras[0] if query_context.carreteras else None
+    road = road or _extract_camera_road(normalized_question)
     province = _extract_camera_province(normalized_question)
-    free_text = _extract_camera_free_text(normalized_question)
+    place = query_context.lugares[0] if query_context.lugares else None
+    free_text = place or _extract_camera_free_text(normalized_question)
 
     if road:
         free_text = None
@@ -178,7 +225,7 @@ def _camera_filters_from_question(question: str) -> dict[str, str | None]:
 
     return {
         "q": free_text,
-        "municipio": None,
+        "municipio": place if place and not road and not province else None,
         "carretera": road,
         "provincia": province,
     }
@@ -271,169 +318,57 @@ def _build_context(results: list[dict[str, Any]]) -> str:
 
 
 def _select_structured_results(
-    question: str,
+    query_context: QueryUnderstanding,
     results: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    if not _has_strong_evidence(results):
-        return []
-
-    preferred_source = _preferred_corpus_source(question)
-    if preferred_source:
-        filtered_results = [
-            result
-            for result in results
-            if result.get("metadata", {}).get("source") == preferred_source
-        ]
-        if filtered_results:
-            return filtered_results
-
-    preferred_type = _preferred_document_type(question)
-    if preferred_type:
-        filtered_results = [
-            result
-            for result in results
-            if result.get("metadata", {}).get("document_type") == preferred_type
-        ]
-        if filtered_results:
-            return filtered_results
-
     structured_types = {"incidencia", "congestion", "camara", CORPUS_DOCUMENT_TYPE}
-    return [
+    structured_results = [
         result
         for result in results
         if result.get("metadata", {}).get("document_type") in structured_types
     ]
-
-
-def _has_strong_evidence(results: list[dict[str, Any]]) -> bool:
-    for result in results:
-        distance = result.get("distance")
-        score = result.get("score")
-        if distance == 0 or distance == 0.0:
-            return True
-        if score is not None and score >= 0.65:
-            return True
-    return False
-
-
-def _preferred_document_type(question: str) -> str | None:
-    normalized_question = _normalize(question)
-    if any(
-        term in normalized_question
-        for term in [
-            "ayuntamiento",
-            "aviso",
-            "avisos",
-            "noticia",
-            "noticias",
-            "deia",
-            "bizkaimove",
-            "bluesky",
-            "publicacion",
-            "publicaciones",
-            "social",
+    if query_context.intent != INTENT_CAMARAS:
+        non_camera_results = [
+            result
+            for result in structured_results
+            if result.get("metadata", {}).get("document_type") != "camara"
         ]
-    ):
-        return CORPUS_DOCUMENT_TYPE
-    if any(term in normalized_question for term in ["camara", "camaras", "imagen"]):
-        return "camara"
-    if any(term in normalized_question for term in ["congestion", "retencion", "vehiculo", "vehiculos"]):
-        return "congestion"
-    if any(term in normalized_question for term in ["incidencia", "incidencias", "accidente", "averia", "obras"]):
-        return "incidencia"
-    return None
+        if non_camera_results:
+            structured_results = non_camera_results
+
+    if query_context.source_preference:
+        source_results = [
+            result
+            for result in structured_results
+            if result.get("metadata", {}).get("source") == query_context.source_preference
+            or result.get("metadata", {}).get("fuente") == query_context.source_preference
+        ]
+        if source_results:
+            structured_results = source_results
+
+    return structured_results
 
 
-def _preferred_corpus_source(question: str) -> str | None:
-    normalized_question = _normalize(question)
-    for alias, source in CORPUS_SOURCE_ALIASES.items():
-        if alias in normalized_question:
-            return source
-    return None
+def _build_structured_answer(
+    results: list[dict[str, Any]],
+    query_context: QueryUnderstanding,
+    retrieval: dict[str, Any],
+) -> str:
+    lines = _answer_caveats(query_context, retrieval, results)
+    lines.append("Encontré estos elementos en las fuentes disponibles:")
 
-
-def _build_structured_answer(results: list[dict[str, Any]]) -> str:
-    lines = ["Si. Segun las fuentes recuperadas, se encontraron estos elementos:"]
-    for index, result in enumerate(results, start=1):
-        metadata = result.get("metadata", {})
-        lines.extend(_format_structured_result(index, metadata))
-    return "\n".join(lines)
-
-    document_type = results[0].get("metadata", {}).get("document_type")
-    if document_type == "incidencia":
-        lines = ["Sí. Según las fuentes recuperadas, se encontraron estas incidencias:"]
-        for index, result in enumerate(results, start=1):
+    groups = _group_results_by_type(results)
+    for title in ["Incidencias", "Obras/cortes", "Congestión", "Cámaras", "Corpus multifuente"]:
+        group_results = groups.get(title, [])
+        if not group_results:
+            continue
+        lines.append("")
+        lines.append(f"{title}:")
+        for index, result in enumerate(group_results, start=1):
             metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Tipo: {_field(metadata, 'tipo')}",
-                    f"   Carretera: {_field(metadata, 'carretera')}",
-                    f"   Causa: {_field(metadata, 'causa')}",
-                    f"   Sentido: {_field(metadata, 'sentido')}",
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-                ]
-            )
-        return "\n".join(lines)
+            lines.extend(_format_structured_result(index, metadata))
 
-    if document_type == "congestion":
-        lines = ["Sí. Según las fuentes recuperadas, se encontraron estos registros de congestión:"]
-        for index, result in enumerate(results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Nivel: {_field(metadata, 'congestion')}",
-                    f"   Carretera o medidor: {_field(metadata, 'carretera')}",
-                    (
-                        "   Valor de tráfico: "
-                        f"{_field(metadata, 'valor_trafico')} {_field(metadata, 'unidad')}"
-                    ),
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-                ]
-            )
-        return "\n".join(lines)
-
-    if document_type == "camara":
-        lines = ["Sí. Según las fuentes recuperadas, se encontraron estas cámaras:"]
-        for index, result in enumerate(results, start=1):
-            metadata = result.get("metadata", {})
-            lines.extend(
-                [
-                    f"{index}. Nombre: {_field(metadata, 'nombre')}",
-                    f"   Carretera: {_field(metadata, 'carretera')}",
-                    (
-                        "   Municipio/provincia: "
-                        f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                    ),
-                    f"   Image URL: {_field(metadata, 'image_url')}",
-                    f"   Source URL: {_field(metadata, 'source_url')}",
-                ]
-            )
-        return "\n".join(lines)
-
-    lines = ["Sí. Según las fuentes recuperadas, se encontraron estos elementos:"]
-    for index, result in enumerate(results, start=1):
-        metadata = result.get("metadata", {})
-        lines.extend(
-            [
-                f"{index}. Tipo: {_field(metadata, 'tipo')}",
-                f"   Carretera: {_field(metadata, 'carretera')}",
-                (
-                    "   Municipio/provincia: "
-                    f"{_field(metadata, 'municipio')} / {_field(metadata, 'provincia')}"
-                ),
-                f"   Fecha/hora: {_field(metadata, 'timestamp')}",
-            ]
-        )
-    return "\n".join(lines)
-
+    return "\n".join(lines).strip()
 
 def _format_structured_result(index: int, metadata: dict[str, Any]) -> list[str]:
     document_type = metadata.get("document_type")
@@ -512,6 +447,122 @@ def _format_structured_result(index: int, metadata: dict[str, Any]) -> list[str]
     ]
 
 
+def _answer_caveats(
+    query_context: QueryUnderstanding,
+    retrieval: dict[str, Any],
+    results: list[dict[str, Any]],
+) -> list[str]:
+    lines = []
+    if query_context.is_route:
+        route_label = " - ".join(
+            place
+            for place in [query_context.route_from, query_context.route_to]
+            if place
+        )
+        if route_label:
+            lines.append(
+                "No dispongo de cálculo de ruta completo para "
+                f"{route_label}, pero encontré información relacionada."
+            )
+        else:
+            lines.append(ROUTE_LIMITATION_MESSAGE)
+
+    if retrieval.get("fallback_used") and (
+        query_context.lugares or query_context.carreteras
+    ):
+        lines.append(
+            NO_SPECIFIC_LOCATION_MESSAGE
+            + " Muestro solo coincidencias relacionadas, no una confirmación exacta."
+        )
+
+    if query_context.intent == INTENT_CONGESTION and not _has_document_type(
+        results,
+        "congestion",
+    ):
+        lines.append(
+            "No encontré registros de congestión específicos para esa ubicación o ruta."
+        )
+
+    if lines:
+        lines.append("")
+    return lines
+
+
+def _prepend_caveats(
+    answer: str,
+    query_context: QueryUnderstanding,
+    retrieval: dict[str, Any],
+) -> str:
+    caveats = _answer_caveats(query_context, retrieval, [])
+    if not caveats:
+        return answer
+    return "\n".join(caveats + [answer]).strip()
+
+
+def _group_results_by_type(results: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    groups: dict[str, list[dict[str, Any]]] = {
+        "Incidencias": [],
+        "Obras/cortes": [],
+        "Congestión": [],
+        "Cámaras": [],
+        "Corpus multifuente": [],
+    }
+    for result in results:
+        metadata = result.get("metadata", {})
+        document_type = metadata.get("document_type")
+        if document_type == "incidencia":
+            groups["Incidencias"].append(result)
+        elif document_type == "congestion":
+            groups["Congestión"].append(result)
+        elif document_type == "camara":
+            groups["Cámaras"].append(result)
+        elif document_type == CORPUS_DOCUMENT_TYPE and _is_works_or_closure(metadata):
+            groups["Obras/cortes"].append(result)
+        elif document_type == CORPUS_DOCUMENT_TYPE:
+            groups["Corpus multifuente"].append(result)
+    return groups
+
+
+def _is_works_or_closure(metadata: dict[str, Any]) -> bool:
+    haystack = _normalize(
+        " ".join(
+            str(metadata.get(field) or "")
+            for field in ["tipo", "tipo_evento", "title", "text"]
+        )
+    )
+    return any(
+        term in haystack
+        for term in ["obra", "corte", "cortado", "carril", "paso alternativo", "ocupacion"]
+    )
+
+
+def _has_document_type(results: list[dict[str, Any]], document_type: str) -> bool:
+    return any(
+        result.get("metadata", {}).get("document_type") == document_type
+        for result in results
+    )
+
+
+def _no_results_message(query_context: QueryUnderstanding) -> str:
+    if query_context.is_route:
+        return (
+            "No dispongo de cálculo de ruta completo y no encontré información "
+            "específica para esa ruta en las fuentes disponibles."
+        )
+    if query_context.lugares or query_context.carreteras:
+        return NO_SPECIFIC_LOCATION_MESSAGE
+    return NO_EVIDENCE_MESSAGE
+
+
+def _retrieval_debug(retrieval: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "fallback_used": retrieval.get("fallback_used", False),
+        "strict_result_count": retrieval.get("strict_result_count", 0),
+        "candidate_count": retrieval.get("candidate_count", 0),
+        "filters": retrieval.get("filters", {}),
+    }
+
+
 def _build_prompt(question: str, context: str) -> str:
     return (
         "Contexto recuperado:\n"
@@ -549,6 +600,8 @@ def _sources_from_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]
                 "text": result.get("text"),
                 "score": result.get("score"),
                 "distance": result.get("distance"),
+                "rerank_score": result.get("rerank_score"),
+                "entity_matches": result.get("entity_matches", []),
                 "metadata": metadata,
             }
         )

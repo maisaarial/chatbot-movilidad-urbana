@@ -396,14 +396,30 @@ with tab_chatbot:
             payload = post_json("/chat", {"question": question})
             st.session_state["chat_answer"] = payload.get("answer", "")
             st.session_state["chat_sources"] = payload.get("sources", [])
+            st.session_state["chat_query_understanding"] = payload.get(
+                "query_understanding",
+                {},
+            )
+            st.session_state["chat_retrieval"] = payload.get("retrieval", {})
         except requests.RequestException as exc:
             st.error(f"No se pudo ejecutar el chatbot: {exc}")
 
     answer = st.session_state.get("chat_answer")
     sources = st.session_state.get("chat_sources", [])
+    query_understanding = st.session_state.get("chat_query_understanding", {})
+    retrieval_debug = st.session_state.get("chat_retrieval", {})
     if answer:
         st.markdown("**Respuesta**")
         st.write(answer)
+
+    if query_understanding:
+        with st.expander("Depuración de consulta"):
+            st.json(
+                {
+                    "query_understanding": query_understanding,
+                    "retrieval": retrieval_debug,
+                }
+            )
 
     if sources:
         st.markdown("**Fuentes usadas**")

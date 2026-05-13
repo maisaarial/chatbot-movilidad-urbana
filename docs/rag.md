@@ -163,6 +163,36 @@ Ejemplo:
 .venv\Scripts\python -c "from src.rag.retriever import retrieve; print(retrieve('A-8', k=2))"
 ```
 
+## Query Understanding Y Filtrado
+
+Antes de recuperar documentos, el chatbot interpreta la pregunta con:
+
+```text
+src/rag/query_understanding.py
+```
+
+La salida incluye:
+
+- `intent`: `camaras`, `incidencias`, `congestion`, `obras_cortes`, `corpus_multifuente` o `general`.
+- `lugares`: municipios, calles o zonas mencionadas.
+- `carreteras`: extraidas con regex, por ejemplo `A-8`, `AP-8`, `BI-2405`, `BI-637`, `N-634` o `AP-68`.
+- `is_route`, `route_from` y `route_to` cuando aparecen patrones como `desde X hasta Y`, `a X desde Y` o `entre X y Y`.
+- `source_preference` cuando se menciona `Trafikoa`, `Ayuntamiento`, `DEIA`, `Bizkaimove` o `Bluesky`.
+
+El retriever usa esa interpretacion para construir filtros preferentes:
+
+| Intent | Prioridad antes del reranking |
+|---|---|
+| `camaras` | No usa RAG primero; mantiene la busqueda estructurada de camaras. |
+| `congestion` | Prioriza `document_type=congestion`. |
+| `incidencias` | Prioriza `document_type=incidencia`. |
+| `obras_cortes` | Prioriza `document_type=corpus_multifuente` y fuentes `DEIA - Bizkaimove` o `Ayuntamiento de Bilbao`. |
+| `corpus_multifuente` | Prioriza documentos del corpus multifuente. |
+
+El retrieval aumenta los candidatos iniciales a 20 como minimo y despues aplica reranking local. Suma puntuacion cuando coinciden carretera, lugar, intent/document_type o fuente preferida. Resta puntuacion a camaras si la pregunta no pide camaras, a congestion de Bilbao cuando se pregunta por otra ubicacion y a documentos que no contienen ninguna entidad detectada.
+
+Si no hay coincidencias con filtros estrictos, se usa fallback semantico. En ese caso la respuesta avisa que no hay coincidencia exacta y solo muestra informacion relacionada.
+
 ## Busqueda Estructurada De Camaras
 
 Las camaras siguen indexadas en ChromaDB, pero cuando la pregunta del usuario es claramente sobre camaras se prioriza una busqueda estructurada sobre `data/processed/cameras.csv`.
@@ -293,6 +323,8 @@ En el frontend, la pestaña `Chatbot` muestra las fuentes usadas con una etiquet
 - metadata completa
 - enlace o imagen si existe `image_url`
 
+Ademas, la respuesta del endpoint incluye `query_understanding` y un resumen de `retrieval`. Streamlit lo muestra en el desplegable `Depuración de consulta` para revisar intent, lugares, carreteras, fuente priorizada, filtros y si se uso fallback semantico.
+
 ## Endpoint `/chat`
 
 Request:
@@ -308,6 +340,18 @@ Response:
 ```json
 {
   "answer": "...",
+  "query_understanding": {
+    "intent": "congestion",
+    "lugares": ["Bilbao"],
+    "carreteras": [],
+    "is_route": false,
+    "source_preference": null
+  },
+  "retrieval": {
+    "fallback_used": false,
+    "strict_result_count": 5,
+    "candidate_count": 20
+  },
   "sources": [
     {
       "text": "...",
@@ -370,6 +414,7 @@ Streamlit incluye un boton `Actualizar indice RAG ahora` en la pestana `RAG`. Es
 | Calidad condicionada por CSV | El chatbot solo puede responder sobre informacion indexada. |
 | Fuentes heterogeneas | Trafikoa es estructurada, Bilbao es institucional, DEIA - Bizkaimove es web de trafico y Bluesky es texto social; la calidad y estabilidad no son equivalentes. |
 | Bluesky | Depende de las cuentas seguidas y de la actividad reciente del timeline. |
+| Sin motor de rutas | El sistema no calcula rutas completas ni sabe todos los tramos entre origen y destino. Si detecta una pregunta de ruta, lo indica y muestra solo documentos relacionados con las entidades recuperadas. |
 | No usa conocimiento externo | Si el contexto no contiene evidencia suficiente, debe indicarlo. |
 
 ## Como Probar El Chat

@@ -103,7 +103,15 @@ expected_source_rate=0.800
 
 ## Intent Y Entidades
 
-La columna `expected_intent` permite una evaluacion futura de clasificacion de intencion. Actualmente no hay un clasificador separado; la intencion se resuelve de forma implicita mediante reglas, busqueda estructurada de camaras y retrieval.
+La columna `expected_intent` permite revisar la clasificacion de intencion. El sistema ya incorpora una capa explicita de `query understanding` en `src/rag/query_understanding.py`, basada en reglas transparentes y defendibles para este prototipo.
+
+Esta capa extrae:
+
+- intencion: `camaras`, `incidencias`, `congestion`, `obras_cortes`, `corpus_multifuente` o `general`;
+- lugares mencionados;
+- carreteras con regex, como `A-8`, `AP-8`, `BI-2405`, `BI-637`, `N-634` o `AP-68`;
+- patrones de ruta, como `desde X hasta Y`, `a X desde Y` o `entre X y Y`;
+- fuente preferida si aparecen `Trafikoa`, `Ayuntamiento`, `DEIA`, `Bizkaimove` o `Bluesky`.
 
 La columna `expected_entities` sirve como validacion manual. Por ejemplo:
 
@@ -112,7 +120,21 @@ La columna `expected_entities` sirve como validacion manual. Por ejemplo:
 - `source=Bizkaimove`
 - `tipo=paso_alternativo`
 
-En una fase posterior se podria medir extraccion de entidades con precision/recall, pero ahora se usa para revisar casos concretos sin sobredimensionar el proyecto.
+En una fase posterior se podria medir extraccion de entidades con precision/recall. En esta fase se usa para revisar casos concretos y comprobar que el reranking no mezcla fuentes irrelevantes.
+
+## Filtrado Y Reranking
+
+El retrieval ya no depende solo de similitud semantica. Para cada consulta se recuperan al menos 20 candidatos y se reordenan con reglas locales:
+
+- coincidencia exacta de carretera;
+- coincidencia de lugar en `municipio`, `title`, `text`, `rag_text` o metadata;
+- coherencia entre `intent` y `document_type`;
+- coincidencia con la fuente preferida;
+- penalizacion de camaras cuando no se pidieron camaras;
+- penalizacion de congestion de Bilbao cuando se pregunta por otra ubicacion;
+- penalizacion de documentos sin entidades de la pregunta.
+
+Si no hay coincidencia estricta, el sistema usa fallback semantico y la respuesta debe avisar que no hay informacion especifica para esa ubicacion, carretera o ruta.
 
 ## Evaluacion Humana
 
@@ -133,6 +155,7 @@ Esta evaluacion humana es importante porque una respuesta puede contener las pal
 - Las fuentes son vivas: Trafikoa, Bizkaimove, Bilbao y Bluesky cambian con el tiempo.
 - Algunas preguntas ambiguas pueden recuperar una fuente plausible pero no la fuente anotada.
 - Las camaras se resuelven por busqueda estructurada antes del RAG; por eso la evaluacion de retrieval semantico no representa completamente ese flujo.
+- El sistema no tiene motor de rutas. Si una pregunta menciona origen y destino, solo puede recuperar documentos relacionados con las entidades detectadas, no calcular la ruta completa.
 - Bluesky depende de las cuentas seguidas y de la actividad reciente del timeline.
 - `expected_answer_contains` es una comprobacion de terminos, no una evaluacion semantica completa.
 - Las preguntas sin informacion suficiente requieren revision humana, porque el retrieval puede recuperar documentos cercanos aunque no respondan realmente.
@@ -142,7 +165,7 @@ Esta evaluacion humana es importante porque una respuesta puede contener las pal
 Los resultados iniciales muestran que el sistema ya recupera y cita fuentes multifuente, pero tambien revelan areas de mejora:
 
 - consultas de camaras funcionan mejor en el chatbot final que en retrieval puro, porque usan busqueda estructurada;
-- algunas consultas de congestion se confunden con incidencias si comparten entidades como Bilbao;
+- las consultas de congestion se benefician del filtrado por `document_type`, pero si no hay datos exactos de la ubicacion el sistema debe avisar y mostrar solo coincidencias relacionadas;
 - una consulta social amplia sobre Bizkaia puede recuperar avisos institucionales antes que Bluesky;
 - las preguntas fuera de alcance deben revisarse para evitar respuestas con evidencia insuficiente.
 
