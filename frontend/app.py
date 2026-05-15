@@ -55,20 +55,61 @@ def _render_theme() -> None:
             --shadow: 0 14px 32px rgba(0, 59, 122, 0.11);
         }}
 
-        .stApp,
+        html,
+        body {{
+            background: #001B3A;
+        }}
+
+        .stApp {{
+            background:
+                radial-gradient(circle at 11% 25%, rgba(255,255,255,0.34) 0 2px, rgba(0,132,61,0.30) 3px 5px, transparent 6px),
+                radial-gradient(circle at 24% 67%, rgba(255,255,255,0.26) 0 2px, rgba(47,128,237,0.28) 3px 5px, transparent 6px),
+                radial-gradient(circle at 56% 20%, rgba(255,255,255,0.26) 0 2px, rgba(0,132,61,0.26) 3px 5px, transparent 6px),
+                radial-gradient(circle at 74% 58%, rgba(255,255,255,0.28) 0 2px, rgba(47,128,237,0.30) 3px 5px, transparent 6px),
+                linear-gradient(24deg, transparent 18%, rgba(255,255,255,0.08) 18.12%, transparent 31%),
+                linear-gradient(145deg, transparent 58%, rgba(255,255,255,0.07) 58.12%, transparent 72%),
+                linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.055) 1px, transparent 1px),
+                radial-gradient(circle at 12% 18%, rgba(47, 128, 237, 0.24), transparent 30rem),
+                radial-gradient(circle at 88% 10%, rgba(0, 132, 61, 0.24), transparent 28rem),
+                radial-gradient(circle at 76% 82%, rgba(47, 128, 237, 0.16), transparent 34rem),
+                linear-gradient(135deg, #001B3A 0%, var(--deusto-blue) 46%, #006B59 100%);
+            background-size:
+                auto,
+                auto,
+                auto,
+                auto,
+                auto,
+                auto,
+                72px 72px,
+                72px 72px,
+                auto,
+                auto,
+                auto,
+                auto;
+            background-attachment: fixed;
+            color: var(--text);
+        }}
+
         [data-testid="stAppViewContainer"] {{
-            background: var(--background);
+            background: transparent;
             color: var(--text);
         }}
 
         [data-testid="stHeader"] {{
-            background: rgba(244, 246, 248, 0.94);
-            border-bottom: 1px solid var(--border);
+            background: rgba(0, 35, 73, 0.60);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
         }}
 
         .block-container {{
-            max-width: 1280px;
+            width: 100%;
+            max-width: 1180px;
+            margin-left: auto;
+            margin-right: auto;
             padding-top: 1.5rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
             padding-bottom: 3rem;
         }}
 
@@ -184,7 +225,13 @@ def _render_theme() -> None:
         }}
 
         div[data-testid="stTabs"] [data-baseweb="tab-panel"] {{
-            padding-top: 1.2rem;
+            margin-top: 1rem;
+            padding: 1.2rem 1.1rem 1.45rem;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.70);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
         }}
 
         .stButton > button {{
@@ -223,11 +270,6 @@ def _render_theme() -> None:
         div[data-testid="stMetric"] {{
             border-left: 4px solid var(--euskadi-green);
             padding: 1rem;
-        }}
-
-        div[data-testid="stDataFrame"],
-        div[data-testid="stTable"] {{
-            overflow: hidden;
         }}
 
         [data-testid="stAlert"] {{
@@ -275,6 +317,10 @@ def _render_theme() -> None:
             div[data-testid="stTabs"] [data-baseweb="tab"] {{
                 min-width: max-content;
                 padding: 0 0.78rem;
+            }}
+
+            div[data-testid="stTabs"] [data-baseweb="tab-panel"] {{
+                padding: 1rem 0.85rem 1.2rem;
             }}
         }}
         </style>

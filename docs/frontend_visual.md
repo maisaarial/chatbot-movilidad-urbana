@@ -20,6 +20,11 @@ La interfaz Streamlit incorpora una identidad visual inspirada en la Universidad
 - Hero superior para movilidad urbana inteligente en Euskadi, con fondo preparado para `assets/img/bilbao_map.jpg`.
 - Hero con un único chip institucional: "Universidad de Deusto".
 - Título principal del hero: "Chatbot de Movilidad Urbana".
+- Fondo global fijo con gradiente Azul Deusto, azul tecnológico y Verde Euskadi.
+- Capas sutiles de grid, nodos y conexiones para continuidad visual con el hero.
+- Paneles de contenido claros sobre el fondo tecnológico para mantener contraste y legibilidad.
+- Ajuste de layout: el fondo se aplica de forma segura en `.stApp`, sin pseudo-elementos globales ni `overflow: hidden` en el contenedor principal de Streamlit.
+- Contenido principal recentrado con ancho máximo de `1180px` y márgenes automáticos.
 - Tarjetas blancas con bordes redondeados, bordes suaves y sombra ligera para métricas, tablas, dataframes y expanders.
 - Botones principales en Azul Deusto con estado hover en azul tecnológico.
 - Verde Euskadi aplicado a estados positivos o normales, como pestaña activa y métricas.
@@ -57,5 +62,7 @@ El hero carga `bilbao_map.jpg` si está disponible. Si no existe o no se puede l
 - Comprobación de orden de pestañas mediante AST: correcta.
 - Prueba funcional de carga con `streamlit.testing.v1.AppTest`: sin excepciones no controladas.
 - Prueba local con servidores levantados: `http://127.0.0.1:8000/docs` respondió `200`, `http://127.0.0.1:8501` respondió `200` y `/corpus` devolvió `35` documentos.
+- Verificación visual por CSS: gradiente global, grid, nodos/conexiones, paneles claros y paleta principal presentes en `frontend/app.py`.
+- Verificación de layout: sin `position: fixed`, `height: 100vh` ni `overflow: hidden` en contenedores globales; sidebar y scroll quedan gestionados por Streamlit.
 
 Durante la prueba de carga pueden aparecer mensajes `st.error` si el backend local no está levantado, porque Streamlit ejecuta el contenido de todas las pestañas al renderizar. Ese comportamiento ya existía y no implica cambios en la lógica de endpoints.
