@@ -1,4 +1,6 @@
+import base64
 from collections import Counter
+from pathlib import Path
 
 import requests
 import streamlit as st
@@ -6,30 +8,318 @@ import streamlit as st
 from src.config import settings
 
 
+ASSETS_IMG_DIR = Path(__file__).resolve().parents[1] / "assets" / "img"
+HERO_IMAGE_PATH = ASSETS_IMG_DIR / "bilbao_map.jpg"
+
+
 st.set_page_config(page_title="Movilidad Urbana", layout="wide")
 
-st.title("Chatbot Movilidad Urbana")
-st.caption("Primera version funcional para consultar Trafikoa y probar RAG.")
+def _asset_data_uri(path: Path) -> str:
+    if not path.exists() or not path.is_file():
+        return ""
+
+    suffix = path.suffix.lower()
+    mime_type = "image/jpeg" if suffix in {".jpg", ".jpeg"} else "image/png"
+    try:
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    except OSError:
+        return ""
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def _hero_background_css() -> str:
+    overlay = (
+        "linear-gradient(120deg, rgba(0, 59, 122, 0.94), "
+        "rgba(0, 59, 122, 0.76) 48%, rgba(0, 132, 61, 0.68))"
+    )
+    hero_image = _asset_data_uri(HERO_IMAGE_PATH)
+    if hero_image:
+        return f"background-image: {overlay}, url('{hero_image}');"
+    return f"background: {overlay};"
+
+
+def _render_theme() -> None:
+    hero_background = _hero_background_css()
+    st.markdown(
+        f"""
+        <style>
+        :root {{
+            --deusto-blue: #003B7A;
+            --tech-blue: #2F80ED;
+            --euskadi-green: #00843D;
+            --bilbao-red: #DA291C;
+            --surface: #FFFFFF;
+            --background: #F4F6F8;
+            --text: #1F2933;
+            --border: rgba(31, 41, 51, 0.10);
+            --shadow: 0 14px 32px rgba(0, 59, 122, 0.11);
+        }}
+
+        .stApp,
+        [data-testid="stAppViewContainer"] {{
+            background: var(--background);
+            color: var(--text);
+        }}
+
+        [data-testid="stHeader"] {{
+            background: rgba(244, 246, 248, 0.94);
+            border-bottom: 1px solid var(--border);
+        }}
+
+        .block-container {{
+            max-width: 1280px;
+            padding-top: 1.5rem;
+            padding-bottom: 3rem;
+        }}
+
+        [data-testid="stSidebar"] {{
+            background: linear-gradient(180deg, var(--deusto-blue), #062F60);
+        }}
+
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span {{
+            color: #FFFFFF;
+        }}
+
+        [data-testid="stSidebar"] input {{
+            background: #FFFFFF;
+            color: var(--text);
+            border-radius: 8px;
+        }}
+
+        .deusto-hero {{
+            {hero_background}
+            position: relative;
+            overflow: hidden;
+            min-height: 288px;
+            border-radius: 8px;
+            padding: clamp(1.75rem, 4vw, 3.2rem);
+            color: #FFFFFF;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.4rem;
+        }}
+
+        .deusto-hero::after {{
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 56px 56px;
+            opacity: 0.34;
+            pointer-events: none;
+        }}
+
+        .deusto-hero > * {{
+            position: relative;
+            z-index: 1;
+        }}
+
+        .hero-badges {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-bottom: 1.15rem;
+        }}
+
+        .hero-badge {{
+            border: 1px solid rgba(255, 255, 255, 0.38);
+            background: rgba(255, 255, 255, 0.13);
+            border-radius: 999px;
+            padding: 0.32rem 0.72rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }}
+
+        .deusto-hero h1 {{
+            margin: 0;
+            color: #FFFFFF;
+            font-size: clamp(2.05rem, 4.2vw, 4rem);
+            line-height: 1.02;
+            letter-spacing: 0;
+        }}
+
+        .deusto-hero p {{
+            margin: 1rem 0 0;
+            max-width: 760px;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: clamp(1rem, 1.6vw, 1.18rem);
+            line-height: 1.55;
+        }}
+
+        h1, h2, h3 {{
+            color: var(--deusto-blue);
+            letter-spacing: 0;
+        }}
+
+        h2, h3 {{
+            margin-top: 0.55rem;
+        }}
+
+        div[data-testid="stTabs"] [data-baseweb="tab-list"] {{
+            gap: 0.25rem;
+            background: var(--deusto-blue);
+            border-radius: 8px;
+            padding: 0.38rem;
+            box-shadow: 0 10px 24px rgba(0, 59, 122, 0.16);
+        }}
+
+        div[data-testid="stTabs"] [data-baseweb="tab"] {{
+            height: 2.65rem;
+            border-radius: 6px;
+            color: #FFFFFF;
+            font-weight: 700;
+            padding: 0 1rem;
+        }}
+
+        div[data-testid="stTabs"] [aria-selected="true"] {{
+            background: #FFFFFF;
+            color: var(--deusto-blue);
+            box-shadow: inset 0 -3px 0 var(--euskadi-green);
+        }}
+
+        div[data-testid="stTabs"] [data-baseweb="tab-panel"] {{
+            padding-top: 1.2rem;
+        }}
+
+        .stButton > button {{
+            border: 0;
+            border-radius: 8px;
+            background: var(--deusto-blue);
+            color: #FFFFFF;
+            font-weight: 700;
+            min-height: 2.65rem;
+            box-shadow: 0 8px 18px rgba(0, 59, 122, 0.18);
+            transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+        }}
+
+        .stButton > button:hover {{
+            background: var(--tech-blue);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+            box-shadow: 0 11px 22px rgba(47, 128, 237, 0.22);
+        }}
+
+        .stButton > button:active {{
+            background: #002B5B;
+            transform: translateY(0);
+        }}
+
+        div[data-testid="stMetric"],
+        div[data-testid="stDataFrame"],
+        div[data-testid="stTable"],
+        div[data-testid="stExpander"] {{
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }}
+
+        div[data-testid="stMetric"] {{
+            border-left: 4px solid var(--euskadi-green);
+            padding: 1rem;
+        }}
+
+        div[data-testid="stDataFrame"],
+        div[data-testid="stTable"] {{
+            overflow: hidden;
+        }}
+
+        [data-testid="stAlert"] {{
+            border-radius: 8px;
+            box-shadow: 0 8px 22px rgba(31, 41, 51, 0.08);
+        }}
+
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stNumberInput"] input,
+        [data-baseweb="select"] > div {{
+            border-radius: 8px;
+            border-color: rgba(0, 59, 122, 0.20);
+        }}
+
+        input[type="checkbox"] {{
+            accent-color: var(--euskadi-green);
+        }}
+
+        a {{
+            color: var(--tech-blue);
+            font-weight: 700;
+        }}
+
+        hr {{
+            border-color: var(--border);
+        }}
+
+        @media (max-width: 768px) {{
+            .block-container {{
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }}
+
+            .deusto-hero {{
+                min-height: 240px;
+                padding: 1.45rem;
+            }}
+
+            div[data-testid="stTabs"] [data-baseweb="tab-list"] {{
+                overflow-x: auto;
+                justify-content: flex-start;
+            }}
+
+            div[data-testid="stTabs"] [data-baseweb="tab"] {{
+                min-width: max-content;
+                padding: 0 0.78rem;
+            }}
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_hero() -> None:
+    st.markdown(
+        """
+        <section class="deusto-hero" aria-label="Movilidad urbana inteligente en Euskadi">
+            <div class="hero-badges">
+                <span class="hero-badge">Universidad de Deusto</span>
+            </div>
+            <h1>Chatbot de Movilidad Urbana</h1>
+            <p>Primera versión funcional para consultas sobre movilidad urbana de Euskadi.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+_render_theme()
+_render_hero()
 
 api_url = st.sidebar.text_input("Backend URL", value=settings.backend_url)
 
 (
+    tab_chatbot,
     tab_incidents,
     tab_cameras,
     tab_congestion,
-    tab_chatbot,
     tab_corpus,
     tab_rag,
     tab_vision,
 ) = st.tabs(
     [
-        "Incidencias",
-        "Camaras",
-        "Congestion",
         "Chatbot",
+        "Incidencias",
+        "Cámaras",
+        "Congestión",
         "Corpus multifuente",
         "RAG",
-        "Vision",
+        "Visión",
     ]
 )
 
@@ -165,7 +455,7 @@ def _display_camera_results(cameras: list[dict]) -> None:
             ]
             if value
         )
-        with st.expander(title or "Camara"):
+        with st.expander(title or "Cámara"):
             st.table(
                 [
                     {
@@ -208,7 +498,7 @@ def _display_camera_image(image_url: str, caption: str | None = None) -> None:
 
 def _display_vision_result(result: dict) -> None:
     st.warning(
-        "Analisis preliminar: no confirma accidentes oficialmente. "
+        "Análisis preliminar: no confirma accidentes oficialmente. "
         "Debe revisarse con fuentes operativas y criterio humano."
     )
     risk_col, label_col, confidence_col = st.columns(3)
@@ -264,7 +554,7 @@ def _display_detection_summary(detections: list[dict]) -> None:
     st.markdown("\n".join(lines))
 
     if counts.get("person", 0):
-        st.warning("Atencion: se detectaron personas en la escena.")
+        st.warning("Atención: se detectaron personas en la escena.")
 
 
 def _count_label(count: int, singular: str, plural: str) -> str:
@@ -305,21 +595,21 @@ with tab_incidents:
     if incidents:
         st.dataframe(incidents, use_container_width=True, hide_index=True)
     else:
-        st.info("Pulsa el boton para descargar incidencias reales desde Trafikoa.")
+        st.info("Pulsa el botón para descargar incidencias reales desde Trafikoa.")
 
 with tab_cameras:
-    st.subheader("Camaras")
-    if st.button("Descargar camaras", use_container_width=True):
+    st.subheader("Cámaras")
+    if st.button("Descargar cámaras", use_container_width=True):
         try:
             payload = get_json("/camaras")
             st.session_state["cameras"] = payload["items"]
         except requests.RequestException as exc:
-            st.error(f"No se pudieron descargar las camaras: {exc}")
+            st.error(f"No se pudieron descargar las cámaras: {exc}")
 
     cameras = st.session_state.get("cameras", [])
     st.metric("Total", len(cameras))
 
-    st.markdown("**Buscar camaras procesadas**")
+    st.markdown("**Buscar cámaras procesadas**")
     search_col_q, search_col_city = st.columns(2)
     with search_col_q:
         camera_q = st.text_input("Texto libre", key="camera_search_q")
@@ -333,14 +623,14 @@ with tab_cameras:
         camera_province = st.text_input("Provincia", key="camera_search_province")
     with search_col_limit:
         camera_limit = st.number_input(
-            "Limite",
+            "Límite",
             min_value=1,
             max_value=100,
             value=10,
             key="camera_search_limit",
         )
     camera_only_with_image = st.checkbox(
-        "Mostrar solo camaras con imagen",
+        "Mostrar solo cámaras con imagen",
         value=True,
         key="camera_search_only_with_image",
     )
@@ -354,9 +644,9 @@ with tab_cameras:
             st.session_state["camera_search_results"] = payload["items"]
             st.session_state["camera_search_count"] = payload["count"]
         except requests.RequestException as exc:
-            st.warning(f"No se pudieron precargar camaras con imagen: {exc}")
+            st.warning(f"No se pudieron precargar cámaras con imagen: {exc}")
 
-    if st.button("Buscar camaras", use_container_width=True):
+    if st.button("Buscar cámaras", use_container_width=True):
         params = {
             "q": camera_q.strip() or None,
             "municipio": camera_city.strip() or None,
@@ -374,20 +664,20 @@ with tab_cameras:
             payload = get_json("/camaras/search", params=params)
             st.session_state["camera_search_results"] = payload["items"]
             st.session_state["camera_search_count"] = payload["count"]
-            st.success(f"Camaras encontradas: {payload['count']}")
+            st.success(f"Cámaras encontradas: {payload['count']}")
         except requests.RequestException as exc:
-            st.error(f"No se pudieron buscar camaras: {exc}")
+            st.error(f"No se pudieron buscar cámaras: {exc}")
 
     camera_search_results = st.session_state.get("camera_search_results", [])
     if camera_search_results:
-        st.markdown("**Resultados de busqueda**")
+        st.markdown("**Resultados de búsqueda**")
         st.caption(
             f"Mostrando {len(camera_search_results)} de "
-            f"{st.session_state.get('camera_search_count', len(camera_search_results))} camaras encontradas."
+            f"{st.session_state.get('camera_search_count', len(camera_search_results))} cámaras encontradas."
         )
         _display_camera_results(camera_search_results)
     else:
-        st.info("No hay resultados de camaras procesadas para los filtros actuales.")
+        st.info("No hay resultados de cámaras procesadas para los filtros actuales.")
 
     if cameras:
         cameras = _sort_cameras_for_display(cameras)
@@ -399,13 +689,13 @@ with tab_cameras:
                 f"{camera.get('id', '')} - {camera.get('nombre', '')}"
                 for camera in cameras_with_image
             ]
-            selected_label = st.selectbox("Camara con imagen", labels)
+            selected_label = st.selectbox("Cámara con imagen", labels)
             selected_camera = cameras_with_image[labels.index(selected_label)]
             _display_camera_image(
                 selected_camera.get("image_url", ""),
                 caption=selected_camera.get("nombre", ""),
             )
-            if st.button("Analizar imagen con vision", use_container_width=True):
+            if st.button("Analizar imagen con visión", use_container_width=True):
                 try:
                     payload = post_json(
                         "/vision/analyze-camera",
@@ -421,24 +711,24 @@ with tab_cameras:
                 and str(vision_result.get("camera_id") or "")
                 == str(selected_camera.get("id") or "")
             ):
-                st.markdown("**Analisis visual**")
+                st.markdown("**Análisis visual**")
                 _display_vision_result(vision_result)
         else:
-            st.info("No se han encontrado camaras con image_url.")
+            st.info("No se han encontrado cámaras con image_url.")
     else:
-        st.info("Pulsa el boton para descargar camaras reales desde Trafikoa.")
+        st.info("Pulsa el botón para descargar cámaras reales desde Trafikoa.")
 
 with tab_congestion:
-    st.subheader("Congestion")
+    st.subheader("Congestión")
     col_low, col_high, col_pages = st.columns(3)
     with col_low:
         umbral_bajo = st.number_input("Umbral bajo", min_value=0.0, value=50.0)
     with col_high:
         umbral_alto = st.number_input("Umbral alto", min_value=1.0, value=150.0)
     with col_pages:
-        max_pages = st.number_input("Paginas flows", min_value=1, max_value=500, value=25)
+        max_pages = st.number_input("Páginas flows", min_value=1, max_value=500, value=25)
 
-    if st.button("Descargar congestion", use_container_width=True):
+    if st.button("Descargar congestión", use_container_width=True):
         try:
             payload = get_json(
                 "/congestion",
@@ -450,7 +740,7 @@ with tab_congestion:
             )
             st.session_state["congestion"] = payload["items"]
         except requests.RequestException as exc:
-            st.error(f"No se pudo descargar la congestion: {exc}")
+            st.error(f"No se pudo descargar la congestión: {exc}")
 
     congestion_rows = st.session_state.get("congestion", [])
     st.metric("Registros", len(congestion_rows))
@@ -483,13 +773,13 @@ with tab_congestion:
 
         st.dataframe(filtered_rows, use_container_width=True, hide_index=True)
     else:
-        st.info("Pulsa el boton para descargar mediciones reales de Trafikoa.")
+        st.info("Pulsa el botón para descargar mediciones reales de Trafikoa.")
 
 with tab_chatbot:
-    st.subheader("Chatbot RAG")
+    st.subheader("Chatbot")
     question = st.text_input(
         "Pregunta",
-        placeholder="Ej. Hay congestion en Bilbao? Hay camaras con imagen?",
+        placeholder="Ej. ¿Hay congestión en Bilbao? ¿Hay cámaras con imagen?",
     )
     if st.button("Preguntar", use_container_width=True):
         try:
@@ -598,16 +888,16 @@ with tab_corpus:
 
         st.dataframe(filtered_corpus, use_container_width=True, hide_index=True)
     else:
-        st.info("Pulsa el boton para construir el corpus multifuente.")
+        st.info("Pulsa el botón para construir el corpus multifuente.")
 
 with tab_rag:
     st.subheader("Estado RAG")
-    if st.button("Actualizar indice RAG ahora", use_container_width=True):
+    if st.button("Actualizar índice RAG ahora", use_container_width=True):
         try:
             st.session_state["rag_status"] = post_json("/rag/refresh")
-            st.success("Indice RAG actualizado.")
+            st.success("Índice RAG actualizado.")
         except requests.RequestException as exc:
-            st.error(f"No se pudo actualizar el indice RAG: {exc}")
+            st.error(f"No se pudo actualizar el índice RAG: {exc}")
 
     try:
         rag_status = st.session_state.get("rag_status") or get_json("/rag/status")
@@ -615,10 +905,10 @@ with tab_rag:
     except requests.RequestException as exc:
         st.error(f"No se pudo obtener el estado RAG: {exc}")
 
-    st.subheader("Busqueda RAG basica")
+    st.subheader("Búsqueda RAG básica")
     documents = st.text_area(
         "Documentos para indexar",
-        placeholder="Un documento por linea. Ej: La A-8 presenta retenciones...",
+        placeholder="Un documento por línea. Ej: La A-8 presenta retenciones...",
     )
     if st.button("Indexar documentos", use_container_width=True):
         items = [line.strip() for line in documents.splitlines() if line.strip()]
@@ -635,16 +925,16 @@ with tab_rag:
             payload = get_json("/rag/search", params={"query": query})
             st.dataframe(payload["results"], use_container_width=True)
         except requests.RequestException as exc:
-            st.error(f"No se pudo ejecutar la busqueda: {exc}")
+            st.error(f"No se pudo ejecutar la búsqueda: {exc}")
 
 with tab_vision:
-    st.subheader("Vision por computador")
+    st.subheader("Visión por computador")
     st.warning(
-        "Analisis preliminar: detecta objetos y posibles anomalias visuales, "
+        "Análisis preliminar: detecta objetos y posibles anomalías visuales, "
         "pero no confirma accidentes oficialmente."
     )
 
-    if st.button("Cargar camaras con imagen", use_container_width=True):
+    if st.button("Cargar cámaras con imagen", use_container_width=True):
         try:
             payload = get_json(
                 "/camaras/search",
@@ -652,7 +942,7 @@ with tab_vision:
             )
             st.session_state["vision_cameras"] = payload.get("items", [])
         except requests.RequestException as exc:
-            st.error(f"No se pudieron cargar camaras con imagen: {exc}")
+            st.error(f"No se pudieron cargar cámaras con imagen: {exc}")
 
     if "vision_cameras" not in st.session_state:
         try:
@@ -679,14 +969,14 @@ with tab_vision:
             )
             for camera in vision_cameras
         ]
-        selected_label = st.selectbox("Camara", labels, key="vision_camera_select")
+        selected_label = st.selectbox("Cámara", labels, key="vision_camera_select")
         selected_camera = vision_cameras[labels.index(selected_label)]
         _display_camera_image(
             selected_camera.get("image_url", ""),
             caption=selected_camera.get("nombre", ""),
         )
 
-        if st.button("Analizar camara seleccionada", use_container_width=True):
+        if st.button("Analizar cámara seleccionada", use_container_width=True):
             try:
                 payload = post_json(
                     "/vision/analyze-camera",
@@ -694,13 +984,13 @@ with tab_vision:
                 )
                 st.session_state["vision_result"] = payload
             except requests.RequestException as exc:
-                st.error(f"No se pudo analizar la camara: {exc}")
+                st.error(f"No se pudo analizar la cámara: {exc}")
 
         result = st.session_state.get("vision_result")
         if result:
             _display_vision_result(result)
     else:
-        st.info("No hay camaras con imagen cargadas para analizar.")
+        st.info("No hay cámaras con imagen cargadas para analizar.")
 
     st.markdown("**Analizar URL de imagen**")
     custom_image_url = st.text_input("Image URL", key="vision_custom_image_url")

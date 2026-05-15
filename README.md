@@ -283,6 +283,7 @@ http://127.0.0.1:8501
 - [RAG y Ollama](docs/rag.md)
 - [Vision por computador](docs/vision.md)
 - [Corpus Multifuente](docs/corpus_multifuente.md)
+- [Frontend Visual](docs/frontend_visual.md)
 - [Evaluacion](docs/evaluacion.md)
 - [Pruebas](docs/pruebas.md)
 - [Uso Local](docs/uso_local.md)
